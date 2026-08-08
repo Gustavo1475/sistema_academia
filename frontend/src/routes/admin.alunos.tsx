@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Users, UserCheck, CalendarCheck, Plus, Pencil, Ban, CheckCircle2 } from "lucide-react";
 import { GymLayout } from "@/components/GymLayout";
 import { RequerSessao } from "@/components/RequerSessao";
@@ -29,7 +29,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useGym } from "@/lib/gym-store";
-import { formatarData, type Aluno, type Plano } from "@/lib/gym-data";
 
 export const Route = createFileRoute("/admin/alunos")({
   head: () => ({
@@ -39,11 +38,6 @@ export const Route = createFileRoute("/admin/alunos")({
         name: "description",
         content: "Métricas da academia e cadastro completo de alunos: planos, status e edição.",
       },
-      { property: "og:title", content: "Alunos — Painel do administrador GymFlow" },
-      {
-        property: "og:description",
-        content: "Acompanhe total de alunos, ativos e check-ins do dia no GymFlow.",
-      },
     ],
   }),
   component: PaginaAlunos,
@@ -51,20 +45,56 @@ export const Route = createFileRoute("/admin/alunos")({
 
 type Erros = Partial<Record<"nome" | "cpf" | "email" | "nascimento", string>>;
 
+// Interface que bate exatamente com o modelo do FastAPI/SQLModel
+interface AlunoAPI {
+  id: number;
+  nome: str;
+  cpf: str;
+  email: str;
+  data_nascimento?: string;
+  plano: string;
+  status: string;
+}
+
 const vazio = {
   nome: "",
   cpf: "",
   email: "",
   nascimento: "",
-  plano: "Mensal" as Plano,
+  plano: "Mensal",
 };
 
 function PaginaAlunos() {
-  const { alunos, checkIns, salvarAluno, alternarStatus } = useGym();
+  const { checkIns } = useGym();
+  
+  // Estado para armazenar os alunos vindos do Banco SQLite/FastAPI
+  const [alunos, setAlunos] = useState<AlunoAPI[]>([]);
+  const [carregando, setCarregando] = useState(true);
+
   const [aberto, setAberto] = useState(false);
-  const [editandoId, setEditandoId] = useState<string | null>(null);
+  const [editandoId, setEditandoId] = useState<number | null>(null);
   const [form, setForm] = useState(vazio);
   const [erros, setErros] = useState<Erros>({});
+
+  // 1. Função para carregar alunos do Backend Python
+  const carregarAlunos = async () => {
+    try {
+      setCarregando(true);
+      const resposta = await fetch("http://127.0.0.1:8000/api/v1/alunos");
+      if (resposta.ok) {
+        const dados = await resposta.json();
+        setAlunos(dados);
+      }
+    } catch (erro) {
+      console.error("Erro ao buscar alunos do backend:", erro);
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  useEffect(() => {
+    carregarAlunos();
+  }, []);
 
   const ativos = useMemo(() => alunos.filter((a) => a.status === "Ativo").length, [alunos]);
 
@@ -75,13 +105,13 @@ function PaginaAlunos() {
     setAberto(true);
   }
 
-  function abrirEdicao(a: Aluno) {
+  function abrirEdicao(a: AlunoAPI) {
     setEditandoId(a.id);
     setForm({
       nome: a.nome,
       cpf: a.cpf,
       email: a.email,
-      nascimento: a.nascimento,
+      nascimento: a.data_nascimento || "",
       plano: a.plano,
     });
     setErros({});
@@ -91,32 +121,57 @@ function PaginaAlunos() {
   function validar(): boolean {
     const e: Erros = {};
     if (form.nome.trim().length < 3) e.nome = "Informe o nome completo (mín. 3 caracteres).";
-    if (!/^\d{3}\.?\d{3}\.?\d{3}-?\d{2}$/.test(form.cpf.trim()))
-      e.cpf = "CPF inválido. Use 000.000.000-00.";
+    if (!form.cpf.trim()) e.cpf = "Informe o CPF.";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) e.email = "E-mail inválido.";
-    if (!form.nascimento) e.nascimento = "Informe a data de nascimento.";
     setErros(e);
     return Object.keys(e).length === 0;
   }
 
-  function submeter(ev: React.FormEvent) {
-    ev.preventDefault();
-    if (!validar()) return;
-    const base = alunos.find((a) => a.id === editandoId);
-    const id = editandoId ?? `a${Date.now()}`;
-    salvarAluno({
-      id,
-      matricula: base?.matricula ?? `GF-${1000 + alunos.length + 1}`,
-      nome: form.nome.trim(),
-      cpf: form.cpf.trim(),
-      email: form.email.trim(),
-      nascimento: form.nascimento,
-      plano: form.plano,
-      status: base?.status ?? "Ativo",
-      validade: base?.validade ?? "2027-01-31",
-    });
-    setAberto(false);
+async function submeter(ev: React.FormEvent) {
+  ev.preventDefault();
+  if (!validar()) return;
+
+  // Garante que a data enviada seja validada ou enviada como null
+  let dataFormatada = null;
+  if (form.nascimento) {
+    // Se a data vier no formato DD/MM/YYYY do campo de texto
+    if (form.nascimento.includes("/")) {
+      const [dia, mes, ano] = form.nascimento.split("/");
+      dataFormatada = `${ano}-${mes}-${dia}`;
+    } else {
+      dataFormatada = form.nascimento; // Ja esta em YYYY-MM-DD do input date
+    }
   }
+
+  const payload = {
+    nome: form.nome.trim(),
+    cpf: form.cpf.trim(),
+    email: form.email.trim(),
+    data_nascimento: dataFormatada,
+    plano: form.plano,
+    status: "Ativo",
+  };
+
+  try {
+    const resposta = await fetch("http://127.0.0.1:8000/api/v1/alunos", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (resposta.ok) {
+      alert("Aluno cadastrado com sucesso no SQLite!");
+      setAberto(false);
+      carregarAlunos(); // Atualiza a tabela na hora!
+    } else {
+      const erroServidor = await resposta.json();
+      console.error("Erro retornado do Python:", erroServidor);
+      alert("Erro do servidor: " + JSON.stringify(erroServidor.detail));
+    }
+  } catch (error) {
+    console.error("Erro na conexao:", error);
+  }
+}
 
   const metricas = [
     { label: "Total de Alunos", valor: alunos.length, icone: Users },
@@ -146,7 +201,7 @@ function PaginaAlunos() {
 
         <div className="mt-8 rounded-2xl border border-border bg-card shadow-sm">
           <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 border-b border-border p-5">
-            <h2 className="min-w-0 truncate text-lg font-bold">Lista de alunos</h2>
+            <h2 className="min-w-0 truncate text-lg font-bold">Lista de alunos (Banco SQLite)</h2>
             <Button onClick={abrirNovo}>
               <Plus className="h-4 w-4" /> Novo Aluno
             </Button>
@@ -164,51 +219,55 @@ function PaginaAlunos() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {alunos.map((a) => (
-                  <TableRow key={a.id}>
-                    <TableCell className="font-medium">
-                      {a.nome}
-                      <span className="block text-xs text-muted-foreground">{a.matricula}</span>
-                    </TableCell>
-                    <TableCell className="whitespace-nowrap">{a.cpf}</TableCell>
-                    <TableCell className="text-muted-foreground">{a.email}</TableCell>
-                    <TableCell>{a.plano}</TableCell>
-                    <TableCell>
-                      <span
-                        className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
-                          a.status === "Ativo"
-                            ? "bg-success/15 text-success"
-                            : "bg-destructive/15 text-destructive"
-                        }`}
-                      >
-                        {a.status}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="outline" size="sm" onClick={() => abrirEdicao(a)}>
-                          <Pencil className="h-3.5 w-3.5" /> Editar
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => alternarStatus(a.id)}>
-                          {a.status === "Ativo" ? (
-                            <>
-                              <Ban className="h-3.5 w-3.5" /> Inativar
-                            </>
-                          ) : (
-                            <>
-                              <CheckCircle2 className="h-3.5 w-3.5" /> Ativar
-                            </>
-                          )}
-                        </Button>
-                      </div>
+                {carregando ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+                      Buscando alunos no servidor Python...
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : alunos.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+                      Nenhum aluno cadastrado no banco de dados.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  alunos.map((a) => (
+                    <TableRow key={a.id}>
+                      <TableCell className="font-medium">
+                        {a.nome}
+                        <span className="block text-xs text-muted-foreground">ID: #{a.id}</span>
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">{a.cpf}</TableCell>
+                      <TableCell className="text-muted-foreground">{a.email}</TableCell>
+                      <TableCell>{a.plano}</TableCell>
+                      <TableCell>
+                        <span
+                          className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
+                            a.status === "Ativo"
+                              ? "bg-success/15 text-success"
+                              : "bg-destructive/15 text-destructive"
+                          }`}
+                        >
+                          {a.status}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button variant="outline" size="sm" onClick={() => abrirEdicao(a)}>
+                            <Pencil className="h-3.5 w-3.5" /> Editar
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>
         </div>
 
+        {/* Modal formulário */}
         <Dialog open={aberto} onOpenChange={setAberto}>
           <DialogContent>
             <DialogHeader>
@@ -244,11 +303,7 @@ function PaginaAlunos() {
                     type="date"
                     value={form.nascimento}
                     onChange={(e) => setForm({ ...form, nascimento: e.target.value })}
-                    aria-invalid={!!erros.nascimento}
                   />
-                  {erros.nascimento ? (
-                    <p className="text-xs text-destructive">{erros.nascimento}</p>
-                  ) : null}
                 </div>
               </div>
               <div className="space-y-2">
@@ -266,7 +321,7 @@ function PaginaAlunos() {
                 <Label>Plano</Label>
                 <Select
                   value={form.plano}
-                  onValueChange={(v) => setForm({ ...form, plano: v as Plano })}
+                  onValueChange={(v) => setForm({ ...form, plano: v })}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -278,17 +333,11 @@ function PaginaAlunos() {
                   </SelectContent>
                 </Select>
               </div>
-              {editandoId ? (
-                <p className="text-xs text-muted-foreground">
-                  Validade atual:{" "}
-                  {formatarData(alunos.find((a) => a.id === editandoId)?.validade ?? "")}
-                </p>
-              ) : null}
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setAberto(false)}>
                   Cancelar
                 </Button>
-                <Button type="submit">Salvar</Button>
+                <Button type="submit">Salvar no Banco</Button>
               </DialogFooter>
             </form>
           </DialogContent>

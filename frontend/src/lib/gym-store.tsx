@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useMemo, useState, useEffect, type ReactNode } from "react";
 import {
   alunosIniciais,
   checkInsIniciais,
@@ -30,23 +30,43 @@ type GymContextValue = {
 const GymContext = createContext<GymContextValue | null>(null);
 
 export function GymProvider({ children }: { children: ReactNode }) {
-  const [sessao, setSessao] = useState<Sessao>(null);
-
+  // 1. Busca a sessão salva no localStorage ao iniciar a aplicação
+  const [sessao, setSessao] = useState<Sessao>(() => {
+    try {
+      const sessaoSalva = localStorage.getItem("gymflow_sessao");
+      return sessaoSalva ? JSON.parse(sessaoSalva) : null;
+    } catch {
+      return null;
+    }
+  });
 
   const [alunos, setAlunos] = useState<Aluno[]>(alunosIniciais);
   const [exercicios, setExercicios] = useState<Exercicio[]>(exerciciosIniciais);
   const [checkIns, setCheckIns] = useState<CheckIn[]>(checkInsIniciais);
 
+  // 2. Sempre que o estado de 'sessao' mudar, sincroniza com o localStorage
+  useEffect(() => {
+    if (sessao) {
+      localStorage.setItem("gymflow_sessao", JSON.stringify(sessao));
+    } else {
+      localStorage.removeItem("gymflow_sessao");
+    }
+  }, [sessao]);
+
   const value = useMemo<GymContextValue>(
     () => ({
       sessao,
-      entrar: (papel) =>
-        setSessao(
+      entrar: (papel) => {
+        const novaSessao: Sessao =
           papel === "admin"
             ? { papel: "admin", nome: "Administrador" }
-            : { papel: "aluno", nome: alunosIniciais[0]!.nome, alunoId: alunosIniciais[0]!.id },
-        ),
-      sair: () => setSessao(null),
+            : { papel: "aluno", nome: alunosIniciais[0]!.nome, alunoId: alunosIniciais[0]!.id };
+
+        setSessao(novaSessao);
+      },
+      sair: () => {
+        setSessao(null);
+      },
       alunos,
       exercicios,
       checkIns,
