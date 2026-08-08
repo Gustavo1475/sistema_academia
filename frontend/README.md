@@ -1,62 +1,56 @@
-# GymFlow Studio
+# 🏋️‍♂️ GymFlow Studio — Sistema de Gestão de Academia
 
-Crie a interface de uma aplicação web completa de Gestão de Academia chamada "GymFlow".
+O **GymFlow Studio** é uma aplicação web completa para gestão de academias, integrando controle de alunos, criação e consulta de fichas de treino, validação de check-ins e autenticação com permissões distintas para **Administradores** e **Alunos**.
 
- O sistema deve ser criado com linguagens html, css e js integradas
+Este projeto faz parte da disciplina de Desenvolvimento Web e DevOps do **Instituto Federal de Brasília (IFB)**.
 
-A aplicação deve ser moderna, limpa, responsiva, com tema escuro (Dark Mode profissional com tons de cinza escuro, preto e detalhes em verde esmeralda ou laranja neon) e conter navegação lateral (Sidebar) para alternar entre as 3 telas principais:
+---
 
-1. DASHBOARD / GESTÃO DE ALUNOS:
+## 🎨 Interface e Experiência (Frontend)
+A interface foi prototipada e construída em **React (TypeScript)** com **Tailwind CSS**, apresentando um visual moderno em *Dark Mode* com tons de cinza escuro e destaques em laranja neon.
 
-   - Resumo no topo com 3 cards de métricas (Total de Alunos, Alunos Ativos, Check-ins Hoje).
+### 📱 Módulos Principais:
+* **Dashboard / Gestão de Alunos:** Cards com métricas em tempo real (Total de Alunos, Ativos, Check-ins), tabela de gerenciamento com suporte a ordenação/filtro e modal para cadastro/edição (CRUD).
+* **Fichas de Treino:** Interface para instrutores criarem rotinas organizadas em abas (Treino A, B e C) com séries, repetições, carga e tempo de descanso.
+* **Recepção & Check-in:** Sistema de controle de acesso rápido por CPF ou Matrícula com validação imediata do status da assinatura.
+* **Autenticação Multi-perfil:** Acesso condicional diferenciando visões administrativas (gestão/CRUD) de visões de aluno (consulta de plano e treinos).
 
-   - Tabela com lista de alunos contendo: Nome, CPF, E-mail, Plano (Mensal/Trimestral/Anual), Status (Badge verde "Ativo" ou vermelho "Inativo") e Botões de ação (Editar, Inativar).
+---
 
-   - Botão "+ Novo Aluno" que abre um Modal com formulário contendo os campos: Nome Completo, CPF, E-mail, Data de Nascimento e Escolha de Plano. Incluir validações visuais simples.
+## 🛠️ Tech Stack (Tecnologias Utilizadas)
 
-2. FICHAS DE TREINO (Visão do Instrutor / Aluno):
+### **Frontend**
+* **Framework:** [React](https://react.dev/) + [Vite](https://vitejs.dev/)
+* **Linguagem:** TypeScript
+* **Estilização:** [Tailwind CSS](https://tailwindcss.com/)
+* **Componentes & Ícones:** Shadcn/UI & Lucide React
 
-   - Seletor para escolher o Aluno.
+### **Backend**
+* **Linguagem:** Python 3.11+
+* **Framework API:** [FastAPI](https://fastapi.tiangolo.com/) (ou Flask)
+* **Validação de Dados:** Pydantic
+* **Banco de Dados:** PostgreSQL / SQLite
+* **Documentação de Rotas:** Swagger UI / OpenAPI (Gerada automaticamente em `/docs`)
 
-   - Formulário para o instrutor adicionar novos exercícios (Nome do Exercício, Grupo Muscular, Séries, Repetições, Carga em kg e Descanso).
+### **DevOps & Infraestrutura**
+* **Conteinerização:** Docker & Docker Compose
+* **Versionamento & CI/CD:** Git, GitHub & GitHub Actions / GitLab CI
 
-   - Exibição da ficha de treino atual dividida em abas (Treino A: Peito/Tríceps, Treino B: Costas/Bíceps, Treino C: Pernas/Ombros) usando Cards bem organizados com ícones.
+---
 
-3. CHECK-IN / CONTROLE DE ACESSO (Recepção):
+## 📂 Estrutura do Repositório
 
-   - Campo grande de busca por CPF ou Matrícula/ID do aluno.
-
-   - Botão de "Confirmar Check-in".
-
-   - Área de resultado exibindo a foto/avatar do aluno, status do plano (se está com o pagamento em dia) e uma mensagem grande em verde ("ACESSO LIBERADO") ou em vermelho ("MATRÍCULA VENCIDA").
-
-4. LOGIN DE ADMINISTRADOR/ALUNO
-
-   - Sistema de autenticação separando aluno do administrador
-
-   - No perfil do aluno poderá consultar a validade do seu plano e treinos relacionados
-
-   - O administrador verifica o painel da quantidade de alunos, CRUD para gerenciar os alunos
-
-Utilize componentes visuais modernos (cards com sombras suaves, botões bem definidos, badges de status, inputs limpos e ícones da biblioteca Lucide React). O código deve ser em React funcional estruturado de forma limpa.
-
-This project was built with [Lovable](https://lovable.dev).
-
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/7471fc47-b5e1-45af-a056-eee6fb6d827e).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
-
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
-```
+```text
+sistema_academia/
+├── backend/              # API REST em Python (FastAPI/Flask)
+│   ├── app/              # Regras de negócio, rotas e modelos de dados
+│   ├── requirements.txt  # Dependências do Python
+│   └── Dockerfile        # Container do Backend
+│
+├── frontend/             # Interface do usuário (React/Vite/Tailwind)
+│   ├── src/              # Componentes, rotas e estilos
+│   ├── package.json      # Dependências do Node.js
+│   └── Dockerfile        # Container do Frontend
+│
+├── docs/                 # Documentação técnica e contratos de API
+└── docker-compose.yml    # Orquestração local do ambiente
