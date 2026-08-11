@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dumbbell, Plus, Trash2, Timer, Repeat, Weight, Layers } from "lucide-react";
 import { GymLayout } from "@/components/GymLayout";
 import { RequerSessao } from "@/components/RequerSessao";
@@ -23,18 +23,17 @@ export const Route = createFileRoute("/admin/treinos")({
       { title: "Fichas de Treino — GymFlow" },
       {
         name: "description",
-        content:
-          "Monte fichas de treino A, B e C por aluno com séries, repetições, carga e descanso.",
-      },
-      { property: "og:title", content: "Fichas de Treino — GymFlow" },
-      {
-        property: "og:description",
-        content: "Prescrição de exercícios por grupo muscular direto no painel do instrutor.",
+        content: "Monte fichas de treino A, B e C por aluno com séries, repetições, carga e descanso.",
       },
     ],
   }),
   component: PaginaTreinos,
 });
+
+interface AlunoAPI {
+  id: number;
+  nome: string;
+}
 
 const formVazio = {
   nome: "",
@@ -47,16 +46,39 @@ const formVazio = {
 };
 
 function PaginaTreinos() {
-  const { alunos, adicionarExercicio, removerExercicio } = useGym();
-  const [alunoId, setAlunoId] = useState(alunos[0]?.id ?? "");
+  const { adicionarExercicio, removerExercicio } = useGym();
+  
+  // Estado local para alunos vindos do SQLite
+  const [alunos, setAlunos] = useState<AlunoAPI[]>([]);
+  const [alunoId, setAlunoId] = useState<string>("");
   const [form, setForm] = useState(formVazio);
   const [erro, setErro] = useState("");
+
+  // Busca alunos reais do servidor Python
+  useEffect(() => {
+    async function carregarAlunosBackend() {
+      try {
+        const resposta = await fetch("http://127.0.0.1:8000/api/v1/alunos");
+        if (resposta.ok) {
+          const dados: AlunoAPI[] = await resposta.json();
+          setAlunos(dados);
+          if (dados.length > 0) {
+            setAlunoId(String(dados[0].id)); // Seleciona o primeiro aluno do banco por padrão
+          }
+        }
+      } catch (err) {
+        console.error("Erro ao carregar alunos na tela de treinos:", err);
+      }
+    }
+    carregarAlunosBackend();
+  }, []);
 
   function submeter(e: React.FormEvent) {
     e.preventDefault();
     if (!alunoId) return setErro("Selecione um aluno.");
     if (form.nome.trim().length < 3) return setErro("Informe o nome do exercício.");
     setErro("");
+
     adicionarExercicio({
       id: `e${Date.now()}`,
       alunoId,
@@ -68,6 +90,7 @@ function PaginaTreinos() {
       carga: Number(form.carga) || 0,
       descanso: form.descanso || "60s",
     });
+
     setForm({ ...formVazio, treino: form.treino, grupo: form.grupo });
   }
 
@@ -84,7 +107,7 @@ function PaginaTreinos() {
                 </SelectTrigger>
                 <SelectContent>
                   {alunos.map((a) => (
-                    <SelectItem key={a.id} value={a.id}>
+                    <SelectItem key={a.id} value={String(a.id)}>
                       {a.nome}
                     </SelectItem>
                   ))}

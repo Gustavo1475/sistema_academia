@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState, useEffect } from "react";
-import { Users, UserCheck, CalendarCheck, Plus, Pencil, Ban, CheckCircle2 } from "lucide-react";
+import { Users, UserCheck, CalendarCheck, Plus, Pencil, Trash2 } from "lucide-react";
 import { GymLayout } from "@/components/GymLayout";
 import { RequerSessao } from "@/components/RequerSessao";
 import { Button } from "@/components/ui/button";
@@ -45,12 +45,12 @@ export const Route = createFileRoute("/admin/alunos")({
 
 type Erros = Partial<Record<"nome" | "cpf" | "email" | "nascimento", string>>;
 
-// Interface que bate exatamente com o modelo do FastAPI/SQLModel
+// Interface ajustada com tipos corretos em TypeScript (string)
 interface AlunoAPI {
   id: number;
-  nome: str;
-  cpf: str;
-  email: str;
+  nome: string;
+  cpf: string;
+  email: string;
   data_nascimento?: string;
   plano: string;
   status: string;
@@ -67,7 +67,6 @@ const vazio = {
 function PaginaAlunos() {
   const { checkIns } = useGym();
   
-  // Estado para armazenar os alunos vindos do Banco SQLite/FastAPI
   const [alunos, setAlunos] = useState<AlunoAPI[]>([]);
   const [carregando, setCarregando] = useState(true);
 
@@ -76,7 +75,7 @@ function PaginaAlunos() {
   const [form, setForm] = useState(vazio);
   const [erros, setErros] = useState<Erros>({});
 
-  // 1. Função para carregar alunos do Backend Python
+  // Carrega alunos da API Python
   const carregarAlunos = async () => {
     try {
       setCarregando(true);
@@ -127,51 +126,73 @@ function PaginaAlunos() {
     return Object.keys(e).length === 0;
   }
 
-async function submeter(ev: React.FormEvent) {
-  ev.preventDefault();
-  if (!validar()) return;
+  async function submeter(ev: React.FormEvent) {
+    ev.preventDefault();
+    if (!validar()) return;
 
-  // Garante que a data enviada seja validada ou enviada como null
-  let dataFormatada = null;
-  if (form.nascimento) {
-    // Se a data vier no formato DD/MM/YYYY do campo de texto
-    if (form.nascimento.includes("/")) {
-      const [dia, mes, ano] = form.nascimento.split("/");
-      dataFormatada = `${ano}-${mes}-${dia}`;
-    } else {
-      dataFormatada = form.nascimento; // Ja esta em YYYY-MM-DD do input date
+    let dataFormatada = null;
+    if (form.nascimento) {
+      if (form.nascimento.includes("/")) {
+        const [dia, mes, ano] = form.nascimento.split("/");
+        dataFormatada = `${ano}-${mes}-${dia}`;
+      } else {
+        dataFormatada = form.nascimento;
+      }
+    }
+
+    const payload = {
+      nome: form.nome.trim(),
+      cpf: form.cpf.trim(),
+      email: form.email.trim(),
+      data_nascimento: dataFormatada,
+      plano: form.plano,
+      status: editandoId ? (alunos.find(a => a.id === editandoId)?.status || "Ativo") : "Ativo",
+    };
+
+    try {
+      const url = editandoId 
+        ? `http://127.0.0.1:8000/api/v1/alunos/${editandoId}`
+        : "http://127.0.0.1:8000/api/v1/alunos";
+
+      const metodo = editandoId ? "PUT" : "POST";
+
+      const resposta = await fetch(url, {
+        method: metodo,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (resposta.ok) {
+        alert(editandoId ? "Aluno atualizado com sucesso!" : "Aluno cadastrado com sucesso!");
+        setAberto(false);
+        carregarAlunos();
+      } else {
+        const erroServidor = await resposta.json();
+        alert("Erro do servidor: " + JSON.stringify(erroServidor.detail));
+      }
+    } catch (error) {
+      console.error("Erro na conexao:", error);
     }
   }
 
-  const payload = {
-    nome: form.nome.trim(),
-    cpf: form.cpf.trim(),
-    email: form.email.trim(),
-    data_nascimento: dataFormatada,
-    plano: form.plano,
-    status: "Ativo",
-  };
+  async function excluirAluno(id: number, nome: string) {
+    if (!confirm(`Tem certeza que deseja excluir o aluno ${nome}?`)) return;
 
-  try {
-    const resposta = await fetch("http://127.0.0.1:8000/api/v1/alunos", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+    try {
+      const resposta = await fetch(`http://127.0.0.1:8000/api/v1/alunos/${id}`, {
+        method: "DELETE",
+      });
 
-    if (resposta.ok) {
-      alert("Aluno cadastrado com sucesso no SQLite!");
-      setAberto(false);
-      carregarAlunos(); // Atualiza a tabela na hora!
-    } else {
-      const erroServidor = await resposta.json();
-      console.error("Erro retornado do Python:", erroServidor);
-      alert("Erro do servidor: " + JSON.stringify(erroServidor.detail));
+      if (resposta.ok) {
+        alert("Aluno removido do banco de dados!");
+        carregarAlunos();
+      } else {
+        alert("Erro ao excluir aluno.");
+      }
+    } catch (error) {
+      console.error("Erro na requisição de exclusão:", error);
     }
-  } catch (error) {
-    console.error("Erro na conexao:", error);
   }
-}
 
   const metricas = [
     { label: "Total de Alunos", valor: alunos.length, icone: Users },
@@ -256,6 +277,13 @@ async function submeter(ev: React.FormEvent) {
                         <div className="flex justify-end gap-2">
                           <Button variant="outline" size="sm" onClick={() => abrirEdicao(a)}>
                             <Pencil className="h-3.5 w-3.5" /> Editar
+                          </Button>
+                          <Button 
+                            variant="destructive" 
+                            size="sm" 
+                            onClick={() => excluirAluno(a.id, a.nome)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" /> Excluir
                           </Button>
                         </div>
                       </TableCell>

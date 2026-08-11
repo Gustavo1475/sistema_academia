@@ -51,3 +51,39 @@ def criar_aluno(aluno: Aluno, session: Session = Depends(get_session)):
     except Exception as e:
         session.rollback()
         raise HTTPException(status_code=400, detail=f"Erro ao salvar aluno: {str(e)}")
+
+
+@app.put("/api/v1/alunos/{aluno_id}", response_model=Aluno)
+def atualizar_aluno(aluno_id: int, dados: Aluno, session: Session = Depends(get_session)):
+    aluno_banco = session.get(Aluno, aluno_id)
+    if not aluno_banco:
+        raise HTTPException(status_code=404, detail="Aluno não encontrado")
+    
+    # Atualiza os dados
+    aluno_banco.nome = dados.nome
+    aluno_banco.cpf = dados.cpf
+    aluno_banco.email = dados.email
+    aluno_banco.plano = dados.plano
+    aluno_banco.status = dados.status
+    
+    if isinstance(dados.data_nascimento, str) and dados.data_nascimento:
+        aluno_banco.data_nascimento = datetime.strptime(dados.data_nascimento, "%Y-%m-%d").date()
+    elif dados.data_nascimento:
+        aluno_banco.data_nascimento = dados.data_nascimento
+
+    session.add(aluno_banco)
+    session.commit()
+    session.refresh(aluno_banco)
+    return aluno_banco
+
+# Adicione no final do backend/main.py
+
+@app.delete("/api/v1/alunos/{aluno_id}")
+def deletar_aluno(aluno_id: int, session: Session = Depends(get_session)):
+    aluno = session.get(Aluno, aluno_id)
+    if not aluno:
+        raise HTTPException(status_code=404, detail="Aluno não encontrado")
+    
+    session.delete(aluno)
+    session.commit()
+    return {"message": f"Aluno ID #{aluno_id} removido com sucesso"}
