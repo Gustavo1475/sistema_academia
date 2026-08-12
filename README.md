@@ -70,14 +70,23 @@ Inicie o servidor de desenvolvimento:
    [x] Persistência de Sessão & Papéis: Controle de autenticação e papéis de acesso (Administrador e Aluno) mantidos via localStorage.
 
 📐 Estrutura da Tabela no Banco de Dados (aluno)
+
    Campo	Tipo	Restrições / Descrição
+   
    id	INTEGER	Chave Primária Sintética (Autoincremento)
+   
    nome	VARCHAR	Nome completo do aluno
+   
    cpf	VARCHAR	CPF do aluno (unique=True, index=True)
+   
    email	VARCHAR	E-mail para contato
+   
    data_nascimento	DATE	Data de nascimento em formato YYYY-MM-DD
+   
    plano	VARCHAR	Modalidade do plano (Mensal, Trimestral, Anual)
+   
    status	VARCHAR	Situação do aluno (Ativo, Inativo, Pendente)
+   
    💡 Fluxo de Negócio & Arquitetura
    
 Client-Server Desacoplado: O frontend em React opera de forma totalmente independente, comunicando-se com o backend Python através de requisições HTTP REST (GET, POST, PUT, DELETE) com payload JSON.
