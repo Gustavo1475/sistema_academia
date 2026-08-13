@@ -45,7 +45,6 @@ export const Route = createFileRoute("/admin/alunos")({
 
 type Erros = Partial<Record<"nome" | "cpf" | "email" | "nascimento", string>>;
 
-// Interface ajustada com tipos corretos em TypeScript (string)
 interface AlunoAPI {
   id: number;
   nome: string;
@@ -62,6 +61,7 @@ const vazio = {
   email: "",
   nascimento: "",
   plano: "Mensal",
+  status: "Ativo",
 };
 
 function PaginaAlunos() {
@@ -112,6 +112,7 @@ function PaginaAlunos() {
       email: a.email,
       nascimento: a.data_nascimento || "",
       plano: a.plano,
+      status: a.status, // Puxa o status atual do banco
     });
     setErros({});
     setAberto(true);
@@ -146,7 +147,7 @@ function PaginaAlunos() {
       email: form.email.trim(),
       data_nascimento: dataFormatada,
       plano: form.plano,
-      status: editandoId ? (alunos.find(a => a.id === editandoId)?.status || "Ativo") : "Ativo",
+      status: form.status, // Envia o status escolhido no seletor
     };
 
     try {
@@ -312,6 +313,7 @@ function PaginaAlunos() {
                 />
                 {erros.nome ? <p className="text-xs text-destructive">{erros.nome}</p> : null}
               </div>
+
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="cpf">CPF</Label>
@@ -334,6 +336,7 @@ function PaginaAlunos() {
                   />
                 </div>
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="email">E-mail</Label>
                 <Input
@@ -345,22 +348,42 @@ function PaginaAlunos() {
                 />
                 {erros.email ? <p className="text-xs text-destructive">{erros.email}</p> : null}
               </div>
-              <div className="space-y-2">
-                <Label>Plano</Label>
-                <Select
-                  value={form.plano}
-                  onValueChange={(v) => setForm({ ...form, plano: v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Mensal">Mensal</SelectItem>
-                    <SelectItem value="Trimestral">Trimestral</SelectItem>
-                    <SelectItem value="Anual">Anual</SelectItem>
-                  </SelectContent>
-                </Select>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Plano</Label>
+                  <Select
+                    value={form.plano}
+                    onValueChange={(v) => setForm({ ...form, plano: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Mensal">Mensal</SelectItem>
+                      <SelectItem value="Trimestral">Trimestral</SelectItem>
+                      <SelectItem value="Anual">Anual</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Status da Matrícula</Label>
+                  <Select
+                    value={form.status}
+                    onValueChange={(v) => setForm({ ...form, status: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Ativo">Ativo</SelectItem>
+                      <SelectItem value="Inativo">Inativo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
+
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setAberto(false)}>
                   Cancelar

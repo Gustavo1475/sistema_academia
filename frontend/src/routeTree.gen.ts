@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AlunoRouteImport } from './routes/aluno'
+import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as AdminAlunosRouteImport } from './routes/admin.alunos'
 import { Route as AdminCheckinRouteImport } from './routes/admin.checkin'
 import { Route as AdminTreinosRouteImport } from './routes/admin.treinos'
@@ -23,6 +24,11 @@ const IndexRoute = IndexRouteImport.update({
 const AlunoRoute = AlunoRouteImport.update({
   id: '/aluno',
   path: '/aluno',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CadastroRoute = CadastroRouteImport.update({
+  id: '/cadastro',
+  path: '/cadastro',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminAlunosRoute = AdminAlunosRouteImport.update({
@@ -44,6 +50,7 @@ const AdminTreinosRoute = AdminTreinosRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/aluno': typeof AlunoRoute
+  '/cadastro': typeof CadastroRoute
   '/admin/alunos': typeof AdminAlunosRoute
   '/admin/checkin': typeof AdminCheckinRoute
   '/admin/treinos': typeof AdminTreinosRoute
@@ -51,6 +58,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/aluno': typeof AlunoRoute
+  '/cadastro': typeof CadastroRoute
   '/admin/alunos': typeof AdminAlunosRoute
   '/admin/checkin': typeof AdminCheckinRoute
   '/admin/treinos': typeof AdminTreinosRoute
@@ -59,6 +67,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/aluno': typeof AlunoRoute
+  '/cadastro': typeof CadastroRoute
   '/admin/alunos': typeof AdminAlunosRoute
   '/admin/checkin': typeof AdminCheckinRoute
   '/admin/treinos': typeof AdminTreinosRoute
@@ -66,13 +75,25 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/aluno' | '/admin/alunos' | '/admin/checkin' | '/admin/treinos'
+    | '/'
+    | '/aluno'
+    | '/cadastro'
+    | '/admin/alunos'
+    | '/admin/checkin'
+    | '/admin/treinos'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/aluno' | '/admin/alunos' | '/admin/checkin' | '/admin/treinos'
+  to:
+    | '/'
+    | '/aluno'
+    | '/cadastro'
+    | '/admin/alunos'
+    | '/admin/checkin'
+    | '/admin/treinos'
   id:
     | '__root__'
     | '/'
     | '/aluno'
+    | '/cadastro'
     | '/admin/alunos'
     | '/admin/checkin'
     | '/admin/treinos'
@@ -81,6 +102,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AlunoRoute: typeof AlunoRoute
+  CadastroRoute: typeof CadastroRoute
   AdminAlunosRoute: typeof AdminAlunosRoute
   AdminCheckinRoute: typeof AdminCheckinRoute
   AdminTreinosRoute: typeof AdminTreinosRoute
@@ -100,6 +122,13 @@ declare module '@tanstack/react-router' {
       path: '/aluno'
       fullPath: '/aluno'
       preLoaderRoute: typeof AlunoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cadastro': {
+      id: '/cadastro'
+      path: '/cadastro'
+      fullPath: '/cadastro'
+      preLoaderRoute: typeof CadastroRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/alunos': {
@@ -129,6 +158,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AlunoRoute: AlunoRoute,
+  CadastroRoute: CadastroRoute,
   AdminAlunosRoute: AdminAlunosRoute,
   AdminCheckinRoute: AdminCheckinRoute,
   AdminTreinosRoute: AdminTreinosRoute,

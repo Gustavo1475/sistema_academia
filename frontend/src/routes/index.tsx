@@ -1,43 +1,21 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Dumbbell, ShieldCheck, User, LogIn } from "lucide-react";
+import { Dumbbell, LogIn, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useGym } from "@/lib/gym-store";
 
 export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: "GymFlow — Acesso ao sistema da academia" },
-      {
-        name: "description",
-        content:
-          "Entre no GymFlow para gerenciar alunos, fichas de treino e check-ins da sua academia.",
-      },
-      { property: "og:title", content: "GymFlow — Acesso ao sistema da academia" },
-      {
-        property: "og:description",
-        content: "Gestão de alunos, fichas de treino e controle de acesso em um só painel.",
-      },
-    ],
-  }),
   component: Login,
 });
 
 function Login() {
   const { entrar } = useGym();
   const navigate = useNavigate();
-  const [papel, setPapel] = useState<"admin" | "aluno">("admin");
-  const [email, setEmail] = useState("admin@gymflow.com");
-  const [senha, setSenha] = useState("123456");
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
-
-  function trocarPapel(novo: "admin" | "aluno") {
-    setPapel(novo);
-    setEmail(novo === "admin" ? "admin@gymflow.com" : "aluno@gymflow.com");
-    setErro("");
-  }
 
   function submeter(e: React.FormEvent) {
     e.preventDefault();
@@ -45,8 +23,12 @@ function Login() {
       setErro("Informe e-mail e senha para continuar.");
       return;
     }
-    entrar(papel);
-    navigate({ to: papel === "admin" ? "/admin/alunos" : "/aluno" });
+
+    // Chama a nova lógica que descobre se é admin ou aluno pelo e-mail
+    entrar(email);
+
+    const eAdmin = email.toLowerCase().includes("admin");
+    navigate({ to: eAdmin ? "/admin/alunos" : "/aluno" });
   }
 
   return (
@@ -66,64 +48,45 @@ function Login() {
 
         <form
           onSubmit={submeter}
-          className="mt-8 rounded-2xl border border-border bg-card p-6 shadow-lg"
+          className="mt-8 rounded-2xl border border-border bg-card p-6 shadow-lg space-y-4"
         >
-          <div className="grid grid-cols-2 gap-2 rounded-xl bg-secondary p-1">
-            <button
-              type="button"
-              onClick={() => trocarPapel("admin")}
-              className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
-                papel === "admin"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <ShieldCheck className="h-4 w-4" /> Admin
-            </button>
-            <button
-              type="button"
-              onClick={() => trocarPapel("aluno")}
-              className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
-                papel === "aluno"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <User className="h-4 w-4" /> Aluno
-            </button>
+          <div className="space-y-2">
+            <Label htmlFor="email">E-mail</Label>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="seu.email@exemplo.com"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="senha">Senha</Label>
+            <Input
+              id="senha"
+              type="password"
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
+              placeholder="••••••"
+            />
           </div>
 
-          <div className="mt-5 space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">E-mail</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="voce@gymflow.com"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="senha">Senha</Label>
-              <Input
-                id="senha"
-                type="password"
-                value={senha}
-                onChange={(e) => setSenha(e.target.value)}
-                placeholder="••••••"
-              />
-            </div>
-            {erro ? <p className="text-sm text-destructive">{erro}</p> : null}
-            <Button type="submit" className="w-full">
-              <LogIn className="h-4 w-4" /> Entrar
-            </Button>
+          {erro ? <p className="text-xs font-semibold text-destructive">{erro}</p> : null}
+
+          <Button type="submit" className="w-full">
+            <LogIn className="h-4 w-4 mr-2" /> Entrar
+          </Button>
+
+          <div className="pt-4 border-t border-border text-center">
+            <p className="text-xs text-muted-foreground mb-2">Ainda não tem uma conta?</p>
+            <Link to="/cadastro">
+              <Button type="button" variant="outline" className="w-full">
+                <UserPlus className="h-4 w-4 mr-2" /> Criar Conta de Aluno
+              </Button>
+            </Link>
           </div>
         </form>
-
-        <p className="mt-4 text-center text-xs text-muted-foreground">
-          Demonstração: admin@gymflow.com ou aluno@gymflow.com — qualquer senha.
-        </p>
       </div>
     </div>
   );

@@ -56,13 +56,17 @@ export function GymProvider({ children }: { children: ReactNode }) {
   const value = useMemo<GymContextValue>(
     () => ({
       sessao,
-      entrar: (papel) => {
-        const novaSessao: Sessao =
-          papel === "admin"
-            ? { papel: "admin", nome: "Administrador" }
-            : { papel: "aluno", nome: alunosIniciais[0]!.nome, alunoId: alunosIniciais[0]!.id };
+      entrar: (emailDigitado: string) => {
+        const emailLimpo = emailDigitado.toLowerCase().trim();
+  
+        // Regra: Se o e-mail tiver "admin", entra como Admin. Senão, entra como Aluno.
+        const eAdmin = emailLimpo.includes("admin");
 
-        setSessao(novaSessao);
+        const novaSessao: Sessao = eAdmin
+          ? { papel: "admin", nome: "Administrador" }
+          : { papel: "aluno", nome: "Aluno", alunoId: "1" };
+
+      setSessao(novaSessao);
       },
       sair: () => {
         setSessao(null);
