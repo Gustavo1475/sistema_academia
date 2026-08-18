@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AlunoRouteImport } from './routes/aluno'
+import { Route as AutenticacaoRouteImport } from './routes/autenticacao'
 import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as AdminAlunosRouteImport } from './routes/admin.alunos'
 import { Route as AdminCheckinRouteImport } from './routes/admin.checkin'
@@ -24,6 +25,11 @@ const IndexRoute = IndexRouteImport.update({
 const AlunoRoute = AlunoRouteImport.update({
   id: '/aluno',
   path: '/aluno',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AutenticacaoRoute = AutenticacaoRouteImport.update({
+  id: '/autenticacao',
+  path: '/autenticacao',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CadastroRoute = CadastroRouteImport.update({
@@ -50,6 +56,7 @@ const AdminTreinosRoute = AdminTreinosRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/aluno': typeof AlunoRoute
+  '/autenticacao': typeof AutenticacaoRoute
   '/cadastro': typeof CadastroRoute
   '/admin/alunos': typeof AdminAlunosRoute
   '/admin/checkin': typeof AdminCheckinRoute
@@ -58,6 +65,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/aluno': typeof AlunoRoute
+  '/autenticacao': typeof AutenticacaoRoute
   '/cadastro': typeof CadastroRoute
   '/admin/alunos': typeof AdminAlunosRoute
   '/admin/checkin': typeof AdminCheckinRoute
@@ -67,6 +75,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/aluno': typeof AlunoRoute
+  '/autenticacao': typeof AutenticacaoRoute
   '/cadastro': typeof CadastroRoute
   '/admin/alunos': typeof AdminAlunosRoute
   '/admin/checkin': typeof AdminCheckinRoute
@@ -77,6 +86,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/aluno'
+    | '/autenticacao'
     | '/cadastro'
     | '/admin/alunos'
     | '/admin/checkin'
@@ -85,6 +95,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/aluno'
+    | '/autenticacao'
     | '/cadastro'
     | '/admin/alunos'
     | '/admin/checkin'
@@ -93,6 +104,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/aluno'
+    | '/autenticacao'
     | '/cadastro'
     | '/admin/alunos'
     | '/admin/checkin'
@@ -102,6 +114,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AlunoRoute: typeof AlunoRoute
+  AutenticacaoRoute: typeof AutenticacaoRoute
   CadastroRoute: typeof CadastroRoute
   AdminAlunosRoute: typeof AdminAlunosRoute
   AdminCheckinRoute: typeof AdminCheckinRoute
@@ -122,6 +135,13 @@ declare module '@tanstack/react-router' {
       path: '/aluno'
       fullPath: '/aluno'
       preLoaderRoute: typeof AlunoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/autenticacao': {
+      id: '/autenticacao'
+      path: '/autenticacao'
+      fullPath: '/autenticacao'
+      preLoaderRoute: typeof AutenticacaoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cadastro': {
@@ -158,6 +178,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AlunoRoute: AlunoRoute,
+  AutenticacaoRoute: AutenticacaoRoute,
   CadastroRoute: CadastroRoute,
   AdminAlunosRoute: AdminAlunosRoute,
   AdminCheckinRoute: AdminCheckinRoute,
