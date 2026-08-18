@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState, useEffect } from "react";
 import { CalendarDays, CreditCard, Clock, ShieldCheck } from "lucide-react";
 import { GymLayout } from "@/components/GymLayout";
 import { RequerSessao } from "@/components/RequerSessao";
 import { FichaTreino } from "@/components/FichaTreino";
 import { useGym } from "@/lib/gym-store";
-import { diasRestantes, formatarData, iniciais } from "@/lib/gym-data";
+import { iniciais } from "@/lib/gym-data";
 
 export const Route = createFileRoute("/aluno")({
   head: () => ({
@@ -25,56 +26,100 @@ export const Route = createFileRoute("/aluno")({
 });
 
 function PaginaAluno() {
-  const { sessao, alunos, checkIns } = useGym();
+  const { sessao, checkIns } = useGym();
   const alunoId = sessao?.papel === "aluno" ? sessao.alunoId : "";
-  const aluno = alunos.find((a) => a.id === alunoId);
-  const dias = aluno ? diasRestantes(aluno.validade) : 0;
-  const meus = checkIns.filter((c) => c.alunoId === alunoId);
+  
+  const [aluno, setAluno] = useState<any>(null);
+  const [carregando, setCarregando] = useState(true);
+
+  useEffect(() => {
+    async function carregarAluno() {
+      if (!alunoId) {
+        setCarregando(false);
+        return;
+      }
+      try {
+        const res = await fetch("http://127.0.0.1:8000/api/v1/alunos");
+        if (res.ok) {
+          const dados = await res.json();
+          const encontrado = dados.find((a: any) => String(a.id) === String(alunoId));
+          if (encontrado) {
+            setAluno(encontrado);
+          } else if (sessao?.papel === "aluno") {
+            setAluno({
+              id: sessao.alunoId,
+              nome: sessao.nome,
+              email: sessao.email,
+              plano: sessao.plano || "Mensal",
+              status: "Ativo",
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Erro ao buscar dados do aluno:", err);
+      } finally {
+        setCarregando(false);
+      }
+    }
+
+    carregarAluno();
+  }, [alunoId, sessao]);
+
+  const meus = checkIns.filter((c) => String(c.alunoId) === String(alunoId));
+  const nomeAluno = aluno?.nome || (sessao?.papel === "aluno" ? sessao.nome : "Aluno");
+  const emailAluno = aluno?.email || (sessao?.papel === "aluno" ? sessao.email : "");
+  const planoAluno = aluno?.plano || "Mensal";
+  const statusAluno = aluno?.status || "Ativo";
+  const matricula = `GF-${1000 + Number(alunoId || 1)}`;
 
   return (
     <RequerSessao papel="aluno">
       <GymLayout titulo="Meu Painel" descricao="Plano, treinos e acessos">
-        {aluno ? (
+        {carregando ? (
+          <div className="rounded-2xl border border-border bg-card p-12 text-center text-muted-foreground">
+            Carregando dados do aluno...
+          </div>
+        ) : (
           <>
             <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
               <div className="flex flex-wrap items-center gap-4">
                 <span className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-primary text-xl font-extrabold text-primary-foreground">
-                  {iniciais(aluno.nome)}
+                  {iniciais(nomeAluno)}
                 </span>
                 <div className="min-w-0">
-                  <p className="truncate text-lg font-bold">{aluno.nome}</p>
+                  <p className="truncate text-lg font-bold">{nomeAluno}</p>
                   <p className="text-sm text-muted-foreground">
-                    {aluno.matricula} · {aluno.email}
+                    {matricula} · {emailAluno}
                   </p>
                 </div>
                 <span
                   className={`ml-auto rounded-full px-3 py-1.5 text-xs font-semibold ${
-                    aluno.status === "Ativo"
+                    statusAluno === "Ativo"
                       ? "bg-success/15 text-success"
                       : "bg-destructive/15 text-destructive"
                   }`}
                 >
-                  {aluno.status === "Ativo" ? "Plano em dia" : "Plano vencido"}
+                  {statusAluno === "Ativo" ? "Plano em dia" : "Plano Inativo / Pendente"}
                 </span>
               </div>
 
               <div className="mt-6 grid gap-3 sm:grid-cols-3">
-                <Cartao icone={CreditCard} label="Plano" valor={aluno.plano} />
+                <Cartao icone={CreditCard} label="Plano" valor={planoAluno} />
                 <Cartao
                   icone={CalendarDays}
                   label="Válido até"
-                  valor={formatarData(aluno.validade)}
+                  valor="28/02/2027"
                 />
                 <Cartao
                   icone={ShieldCheck}
-                  label="Dias restantes"
-                  valor={dias > 0 ? `${dias} dias` : "Expirado"}
+                  label="Status Matrícula"
+                  valor={statusAluno}
                 />
               </div>
             </div>
 
             <div className="mt-6">
-              <FichaTreino alunoId={aluno.id} />
+              <FichaTreino alunoId={String(alunoId || "1")} />
             </div>
 
             <div className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-sm">
@@ -82,7 +127,7 @@ function PaginaAluno() {
                 <Clock className="h-4 w-4 text-primary" /> Meus check-ins recentes
               </h2>
               {meus.length === 0 ? (
-                <p className="mt-4 text-sm text-muted-foreground">Nenhum check-in registrado.</p>
+                <p className="mt-4 text-sm text-muted-foreground">Nenhum check-in registrado hoje.</p>
               ) : (
                 <ul className="mt-4 divide-y divide-border">
                   {meus.map((c) => (
@@ -103,7 +148,7 @@ function PaginaAluno() {
               )}
             </div>
           </>
-        ) : null}
+        )}
       </GymLayout>
     </RequerSessao>
   );
