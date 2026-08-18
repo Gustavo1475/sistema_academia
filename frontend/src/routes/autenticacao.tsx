@@ -11,24 +11,55 @@ export const Route = createFileRoute("/autenticacao")({
 });
 
 function Login() {
-  const { entrar } = useGym();
+  const { entrarComoAdmin, entrarComoAluno } = useGym();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
+  const [carregando, setCarregando] = useState(false);
 
-  function submeter(e: React.FormEvent) {
+  async function submeter(e: React.FormEvent) {
     e.preventDefault();
-    if (!email.trim() || !senha.trim()) {
+    setErro("");
+
+    const emailLimpo = email.trim().toLowerCase();
+    if (!emailLimpo || !senha.trim()) {
       setErro("Informe e-mail e senha para continuar.");
       return;
     }
 
-    // Chama a nova lógica que descobre se é admin ou aluno pelo e-mail
-    entrar(email);
+    // 1. Administrador
+    if (emailLimpo.includes("admin")) {
+      entrarComoAdmin();
+      navigate({ to: "/admin/alunos" });
+      return;
+    }
 
-    const eAdmin = email.toLowerCase().includes("admin");
-    navigate({ to: eAdmin ? "/admin/alunos" : "/aluno" });
+    // 2. Aluno verificado via API do SQLite
+    try {
+      setCarregando(true);
+      const res = await fetch("http://127.0.0.1:8000/api/v1/alunos");
+      if (!res.ok) {
+        throw new Error("Erro ao conectar com o backend.");
+      }
+
+      const alunos = await res.json();
+      const alunoEncontrado = alunos.find(
+        (a: any) => a.email.toLowerCase().trim() === emailLimpo
+      );
+
+      if (!alunoEncontrado) {
+        setErro("E-mail não encontrado no sistema. Realize seu pré-cadastro.");
+        return;
+      }
+
+      entrarComoAluno(alunoEncontrado);
+      navigate({ to: "/aluno" });
+    } catch (err) {
+      setErro("Não foi possível conectar ao servidor.");
+    } finally {
+      setCarregando(false);
+    }
   }
 
   return (
@@ -66,7 +97,7 @@ function Login() {
               placeholder="seu.email@exemplo.com"
             />
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="senha">Senha</Label>
             <Input
@@ -80,8 +111,8 @@ function Login() {
 
           {erro ? <p className="text-xs font-semibold text-destructive">{erro}</p> : null}
 
-          <Button type="submit" className="w-full">
-            <LogIn className="h-4 w-4 mr-2" /> Entrar
+          <Button type="submit" className="w-full" disabled={carregando}>
+            <LogIn className="h-4 w-4 mr-2" /> {carregando ? "Entrando..." : "Entrar"}
           </Button>
 
           <div className="pt-4 border-t border-border text-center">
