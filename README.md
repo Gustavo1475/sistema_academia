@@ -1,102 +1,261 @@
 # 🏋️‍♂️ GymFlow — Sistema de Gestão de Academias
 
-O **GymFlow** é uma solução Full-Stack para gerenciamento de academias e alunos, desenvolvida com uma arquitetura desacoplada (Client-Server), API REST e persistência de dados em banco de dados relacional.
+O **GymFlow** é uma solução **Full-Stack** para gerenciamento de academias e alunos, desenvolvida com uma arquitetura desacoplada (**Client-Server**), **API REST** e persistência de dados em banco de dados relacional.
+
+> 📚 **Documentação:** A documentação técnica detalhada, incluindo o mapeamento de usuários, diagramas, casos de uso e contratos da API, pode ser acessada no [Documento Oficial do Projeto (Google Docs)](https://docs.google.com/document/d/1UMbYm9IuDMg-JfmI-dK98ihlaXjQsHU-sXgMyeshqtA/edit?tab=t.0).
 
 ---
 
 ## 🛠️ Tecnologias Utilizadas
 
-### **Backend**
-- **Linguagem:** Python 3.11+
-- **Framework Web:** [FastAPI](https://fastapi.tiangolo.com/)
-- **ORM / Modelagem:** [SQLModel](https://sqlmodel.tiangolo.com/) (Pydantic + SQLAlchemy)
-- **Banco de Dados:** SQLite (`gymflow.db`)
-- **Servidor ASGI:** Uvicorn
+### Backend
 
-### **Frontend**
-- **Biblioteca/Framework:** [React](https://react.dev/) + TypeScript
-- **Roteamento:** [TanStack Router](https://tanstack.com/router)
-- **Estilização & UI:** Tailwind CSS + Shadcn UI
-- **Ícones:** Lucide React
-- **Build Tool:** Vite
+* **Linguagem:** Python 3.11+
+* **Framework Web:** [FastAPI](https://fastapi.tiangolo.com/)
+* **ORM / Modelagem:** [SQLModel](https://sqlmodel.tiangolo.com/) (Pydantic + SQLAlchemy)
+* **Banco de Dados:** SQLite (`gymflow.db`)
+* **Servidor ASGI:** Uvicorn
 
----
+### Frontend
 
-## 🚀 Como Rodar o Projeto
-
-Para executar a aplicação completa na sua máquina, é necessário rodar o **Backend** e o **Frontend** simultaneamente em dois terminais separados.
+* **Biblioteca/Framework:** [React](https://react.dev/) + TypeScript
+* **Roteamento:** [TanStack Router](https://tanstack.com/router)
+* **Estilização & UI:** Tailwind CSS + Shadcn UI
+* **Ícones:** Lucide React
+* **Build Tool:** Vite
 
 ---
 
-### 🐍 1. Executando o Backend (FastAPI + Python)
+## 🚀 Como Executar o Projeto
 
-1. Abra o terminal e navegue até a pasta do backend:
-   ```bash
-   cd backend
+Para executar a aplicação completa localmente, é necessário iniciar o **Backend** e o **Frontend** simultaneamente em dois terminais separados.
 
-2. Crie e ative o ambiente virtual (venv):
-   python -m venv .venv
+### 1. Clonar o Repositório
+
+Primeiro, clone o projeto para sua máquina local:
+
+```bash
+git clone https://github.com/SEU_USUARIO/sistema_academia.git
+cd sistema_academia
+```
+
+> **Observação:** Substitua `SEU_USUARIO` pelo seu nome de usuário do GitHub.
+
+---
+
+### 2. 🐍 Executando o Backend
+
+O backend utiliza **Python**, **FastAPI**, **SQLModel** e **Uvicorn**.
+
+#### 2.1. Acessar a pasta do backend
+
+```bash
+cd backend
+```
+
+#### 2.2. Criar o ambiente virtual
+
+```bash
+python -m venv .venv
+```
+
+#### 2.3. Ativar o ambiente virtual
+
+**Windows PowerShell:**
+
+```powershell
 .\.venv\Scripts\Activate.ps1
+```
 
-3. Instale as dependências necessárias:
-  pip install fastapi uvicorn sqlmodel
+**Windows CMD:**
 
-4. Inicie o servidor da API Python:
-   uvicorn main:app --reload
-   🟢 Backend rodando em: http://127.0.0.1:8000
-   📄 Documentação interativa (Swagger UI): http://127.0.0.1:8000/docs
+```cmd
+.venv\Scripts\activate
+```
 
-⚛️ 2. Executando o Frontend (React + Vite)
+#### 2.4. Instalar as dependências
 
-Em um novo terminal, navegue até a pasta do frontend:
+```bash
+pip install fastapi uvicorn sqlmodel
+```
 
-Bash: cd frontend
+#### 2.5. Iniciar o servidor
 
-Instale as dependências do projeto (somente se for a primeira vez):
-  Bash: npm install
-  
-Inicie o servidor de desenvolvimento:
-  Bash: npm run dev
-  🌐 Frontend rodando em: http://localhost:8080 (ou http://localhost:5173)
+```bash
+uvicorn main:app --reload
+```
 
-📌 Funcionalidades Principais
+Após iniciar, o backend estará disponível em:
 
-   [x] Gestão Completa de Alunos (CRUD): Cadastrar, listar, editar e excluir alunos salvos diretamente no banco de dados SQLite (gymflow.db).
+* 🟢 **API:** http://127.0.0.1:8000
+* 📄 **Swagger UI:** http://127.0.0.1:8000/docs
+* 📚 **ReDoc:** http://127.0.0.1:8000/redoc
 
-   [x] Controle de Acesso / Check-in: Busca em tempo real de alunos por CPF ou ID de Matrícula, com verificação do status do plano (Ativo vs Inativo) para liberação de acesso.
+---
 
-   [x] Fichas de Treino: Seleção dinâmica de alunos cadastrados no banco para montagem, acompanhamento e remoção de exercícios nas fichas A, B e C.
+### 3. ⚛️ Executando o Frontend
 
-   [x] Persistência de Sessão & Papéis: Controle de autenticação e papéis de acesso (Administrador e Aluno) mantidos via localStorage.
+Abra **um novo terminal**, mantendo o backend em execução.
 
-📐 Estrutura da Tabela no Banco de Dados (aluno)
+#### 3.1. Acessar a pasta do frontend
 
-   Campo	Tipo	Restrições / Descrição
-   
-   id	INTEGER	Chave Primária Sintética (Autoincremento)
-   
-   nome	VARCHAR	Nome completo do aluno
-   
-   cpf	VARCHAR	CPF do aluno (unique=True, index=True)
-   
-   email	VARCHAR	E-mail para contato
-   
-   data_nascimento	DATE	Data de nascimento em formato YYYY-MM-DD
-   
-   plano	VARCHAR	Modalidade do plano (Mensal, Trimestral, Anual)
-   
-   status	VARCHAR	Situação do aluno (Ativo, Inativo, Pendente)
-   
-   💡 Fluxo de Negócio & Arquitetura
-   
-Client-Server Desacoplado: O frontend em React opera de forma totalmente independente, comunicando-se com o backend Python através de requisições HTTP REST (GET, POST, PUT, DELETE) com payload JSON.
+```bash
+cd frontend
+```
 
-CORS Configurado: Permite requisições seguras entre a aplicação web (porta 8080) e o servidor FastAPI (porta 8000).
+#### 3.2. Instalar as dependências
 
-Validação de Negócio no Check-in: O sistema bloqueia a entrada de alunos inadimplentes ou com cadastros inativos.
+Execute este comando apenas na primeira configuração do projeto ou quando as dependências forem alteradas:
 
-👥 Autores
-Desenvolvido como projeto prático para a disciplina de Tecnologia em Sistemas para Internet do Instituto Federal de Brasília (IFB).
+```bash
+npm install
+```
+
+#### 3.3. Iniciar o servidor de desenvolvimento
+
+```bash
+npm run dev
+```
+
+O Vite disponibilizará o frontend em um endereço semelhante a:
+
+```text
+http://localhost:5173
+```
+
+> ℹ️ **Observação:** A porta pode variar conforme a configuração do Vite. O endereço correto será exibido no terminal após a execução de `npm run dev`.
+
+---
+
+## 📌 Funcionalidades Principais
+
+* [x] **Gestão completa de alunos (CRUD):** cadastrar, listar, editar e excluir alunos, com persistência no banco de dados SQLite (`gymflow.db`).
+* [x] **Controle de acesso / Check-in:** busca de alunos por CPF ou ID de matrícula, com verificação do status do plano para liberação de acesso.
+* [x] **Fichas de treino:** seleção dinâmica de alunos cadastrados para montagem, acompanhamento e remoção de exercícios nas fichas A, B e C.
+* [x] **Persistência de sessão e papéis:** controle de autenticação e papéis de acesso, como Administrador e Aluno, mantidos por meio do `localStorage`.
+
+---
+
+## 📐 Estrutura da Tabela `Aluno`
+
+| Campo             | Tipo      | Restrições / Descrição                           |
+| ----------------- | --------- | ------------------------------------------------ |
+| `id`              | `INTEGER` | Chave primária sintética com autoincremento      |
+| `nome`            | `VARCHAR` | Nome completo do aluno                           |
+| `cpf`             | `VARCHAR` | CPF do aluno (`unique=True`, `index=True`)       |
+| `email`           | `VARCHAR` | E-mail para contato                              |
+| `data_nascimento` | `DATE`    | Data de nascimento no formato `YYYY-MM-DD`       |
+| `plano`           | `VARCHAR` | Modalidade do plano: Mensal, Trimestral ou Anual |
+| `status`          | `VARCHAR` | Situação do aluno: Ativo, Inativo ou Pendente    |
+
+---
+
+## 💡 Fluxo de Negócio e Arquitetura
+
+### Arquitetura Client-Server
+
+O frontend desenvolvido em **React** opera de forma independente do backend e se comunica com a API Python por meio de requisições HTTP REST.
+
+São utilizadas operações como:
+
+* `GET` — consulta de dados;
+* `POST` — criação de registros;
+* `PUT` — atualização de registros;
+* `DELETE` — exclusão de registros.
+
+Os dados são enviados e recebidos utilizando o formato **JSON**.
+
+### CORS
+
+O backend possui configuração de **CORS (Cross-Origin Resource Sharing)** para permitir a comunicação entre o frontend e a API durante a execução da aplicação.
+
+### Validação de Negócio no Check-in
+
+Durante o processo de check-in, o sistema verifica os dados do aluno e seu status cadastral.
+
+Alunos com cadastro **inativo** ou situação incompatível com as regras de acesso são impedidos de realizar o check-in.
+
+---
+
+## 📁 Estrutura Geral do Projeto
+
+A estrutura esperada do projeto é semelhante à seguinte:
+
+```text
+sistema_academia/
+├── backend/
+│   ├── .venv/
+│   ├── gymflow.db
+│   └── main.py
+│
+├── frontend/
+│   ├── node_modules/
+│   ├── src/
+│   ├── package.json
+│   ├── package-lock.json
+│   └── vite.config.*
+│
+└── README.md
+```
+
+> ⚠️ **Importante:** A pasta `node_modules/` e o ambiente virtual `.venv/` não devem ser versionados no Git. Recomenda-se adicioná-los ao `.gitignore`.
+
+---
+
+## 🔐 Variáveis de Ambiente e Dados Sensíveis
+
+Não envie para o GitHub informações sensíveis, como:
+
+* Senhas;
+* Tokens de autenticação;
+* Chaves de API;
+* Credenciais de banco de dados;
+* Arquivos `.env` contendo informações privadas.
+
+Caso o projeto utilize variáveis de ambiente, mantenha um arquivo `.env.example` contendo apenas os nomes das variáveis necessárias, sem valores reais.
+
+---
+
+## 🧪 Verificação da Aplicação
+
+Após iniciar o backend e o frontend:
+
+1. Acesse o endereço exibido pelo Vite no terminal.
+2. Verifique se a interface do GymFlow foi carregada corretamente.
+3. Confirme se o frontend consegue se comunicar com a API.
+4. Acesse a documentação Swagger em `http://127.0.0.1:8000/docs`.
+5. Teste as principais operações de cadastro, edição, consulta e exclusão de alunos.
+6. Teste o processo de check-in e a validação do status do aluno.
+
+---
+
+## 📚 Documentação do Projeto
+
+A documentação técnica completa contém informações adicionais sobre:
+
+* Mapeamento de usuários;
+* Requisitos do sistema;
+* Casos de uso;
+* Diagramas;
+* Arquitetura;
+* Contratos da API;
+* Regras de negócio.
+
+📄 **Documento Oficial do Projeto:**
+[Google Docs](https://docs.google.com/document/d/1UMbYm9IuDMg-JfmI-dK98ihlaXjQsHU-sXgMyeshqtA/edit?tab=t.0)
+
+---
+
+## 👥 Autores
+
+Desenvolvido como projeto prático para a disciplina de **Tecnologia em Sistemas para Internet** do **Instituto Federal de Brasília (IFB)**.
+
+---
+
+## 📄 Licença
+
+Este projeto foi desenvolvido para fins **acadêmicos e educacionais**.
+
 
 
 ---
