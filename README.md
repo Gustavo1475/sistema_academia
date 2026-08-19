@@ -193,7 +193,7 @@ sistema_academia/
 │   ├── src/
 │   ├── package.json
 │   ├── package-lock.json
-│   └── vite.config.*
+│   └── vite.config.
 │
 └── README.md
 ```
@@ -236,7 +236,6 @@ A documentação técnica completa contém informações adicionais sobre:
 * Mapeamento de usuários;
 * Requisitos do sistema;
 * Casos de uso;
-* Diagramas;
 * Arquitetura;
 * Contratos da API;
 * Regras de negócio.
