@@ -11,11 +11,16 @@ export const Route = createFileRoute("/autenticacao")({
 });
 
 function Login() {
+<<<<<<< Updated upstream
   const { entrarComoAdmin, entrarComoAluno } = useGym();
+=======
+  const { entrar } = useGym();
+>>>>>>> Stashed changes
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
+<<<<<<< Updated upstream
   const [carregando, setCarregando] = useState(false);
 
   async function submeter(e: React.FormEvent) {
@@ -24,10 +29,17 @@ function Login() {
 
     const emailLimpo = email.trim().toLowerCase();
     if (!emailLimpo || !senha.trim()) {
+=======
+
+  function submeter(e: React.FormEvent) {
+    e.preventDefault();
+    if (!email.trim() || !senha.trim()) {
+>>>>>>> Stashed changes
       setErro("Informe e-mail e senha para continuar.");
       return;
     }
 
+<<<<<<< Updated upstream
     // 1. Administrador
     if (emailLimpo.includes("admin")) {
       entrarComoAdmin();
@@ -60,6 +72,13 @@ function Login() {
     } finally {
       setCarregando(false);
     }
+=======
+    // Chama a nova lógica que descobre se é admin ou aluno pelo e-mail
+    entrar(email);
+
+    const eAdmin = email.toLowerCase().includes("admin");
+    navigate({ to: eAdmin ? "/admin/alunos" : "/aluno" });
+>>>>>>> Stashed changes
   }
 
   return (
@@ -97,7 +116,11 @@ function Login() {
               placeholder="seu.email@exemplo.com"
             />
           </div>
+<<<<<<< Updated upstream
 
+=======
+          
+>>>>>>> Stashed changes
           <div className="space-y-2">
             <Label htmlFor="senha">Senha</Label>
             <Input
@@ -111,8 +134,13 @@ function Login() {
 
           {erro ? <p className="text-xs font-semibold text-destructive">{erro}</p> : null}
 
+<<<<<<< Updated upstream
           <Button type="submit" className="w-full" disabled={carregando}>
             <LogIn className="h-4 w-4 mr-2" /> {carregando ? "Entrando..." : "Entrar"}
+=======
+          <Button type="submit" className="w-full">
+            <LogIn className="h-4 w-4 mr-2" /> Entrar
+>>>>>>> Stashed changes
           </Button>
 
           <div className="pt-4 border-t border-border text-center">
