@@ -10,19 +10,17 @@ O **GymFlow** é uma solução **Full-Stack** para gerenciamento de academias e 
 
 ### Backend
 
-* **Linguagem:** Python 3.11+
-* **Framework Web:** [FastAPI](https://fastapi.tiangolo.com/)
-* **ORM / Modelagem:** [SQLModel](https://sqlmodel.tiangolo.com/) (Pydantic + SQLAlchemy)
-* **Banco de Dados:** SQLite (`gymflow.db`)
-* **Servidor ASGI:** Uvicorn
+- **Python 3.11+** com **FastAPI** (alta performance e documentação OpenAPI nativa).
+- **SQLModel** (ORM combinando SQLAlchemy e Pydantic para validação e tipagem rigorosa).
+- **SQLite** (banco relacional local para persistência de dados).
+- **pwdlib / Bcrypt** (hashing unidirecional e seguro de senhas).
+- **Uvicorn** (servidor ASGI).
 
 ### Frontend
 
-* **Biblioteca/Framework:** [React](https://react.dev/) + TypeScript
-* **Roteamento:** [TanStack Router](https://tanstack.com/router)
-* **Estilização & UI:** Tailwind CSS + Shadcn UI
-* **Ícones:** Lucide React
-* **Build Tool:** Vite
+- **React** com **TypeScript** e **Vite** (Single Page Application rápida e fortemente tipada).
+- **TanStack Router** (gerenciamento de rotas e layout baseado em arquivos/árvore).
+- **Tailwind CSS** + **Lucide React** (interface responsiva e moderna).
 
 ---
 
@@ -35,7 +33,7 @@ Para executar a aplicação completa localmente, é necessário iniciar o **Back
 Primeiro, clone o projeto para sua máquina local:
 
 ```bash
-git clone https://github.com/SEU_USUARIO/sistema_academia.git
+git clone [https://github.com/Gustavo1475/sistema_academia.git](https://github.com/Gustavo1475/sistema_academia.git)
 cd sistema_academia
 ```
 
@@ -184,18 +182,18 @@ A estrutura esperada do projeto é semelhante à seguinte:
 ```text
 sistema_academia/
 ├── backend/
-│   ├── .venv/
-│   ├── gymflow.db
-│   └── main.py
-│
+│   ├── main.py              # API FastAPI, Schemas, Rotas e Modelos ORM
+│   ├── gymflow.db           # Banco de dados SQLite persistente
+│   └── requirements.txt     # Dependências Python
 ├── frontend/
-│   ├── node_modules/
 │   ├── src/
-│   ├── package.json
-│   ├── package-lock.json
-│   └── vite.config.
-│
-└── README.md
+│   │   ├── components/      # Componentes compartilhados e guards (RequerSessao)
+│   │   ├── lib/             # Context API e Store de dados (gym-store.tsx)
+│   │   └── routes/          # Telas (Admin, Aluno, Check-in, Cadastro, Login)
+│   ├── package.json         # Dependências do ecossistema Node/React
+│   └── vite.config.ts       # Configuração de build e plugins
+├── docs/                    # Documentação técnica e modelagem
+└── .github/workflows/       # Pipelines de CI/CD
 ```
 
 > ⚠️ **Importante:** A pasta `node_modules/` e o ambiente virtual `.venv/` não devem ser versionados no Git. Recomenda-se adicioná-los ao `.gitignore`.
