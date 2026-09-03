@@ -2,7 +2,7 @@
 
 O **GymFlow** é uma solução **Full-Stack** para gerenciamento de academias e alunos, desenvolvida com uma arquitetura desacoplada (**Client-Server**), **API REST** e persistência de dados em banco de dados relacional.
 
-> 📚 **Documentação:** A documentação técnica detalhada, incluindo o mapeamento de usuários, diagramas, casos de uso e contratos da API, pode ser acessada no [Documento Oficial do Projeto (Google Docs)](https://docs.google.com/document/d/1UMbYm9IuDMg-JfmI-dK98ihlaXjQsHU-sXgMyeshqtA/edit?tab=t.0).
+> 📚 **Documentação:** A documentação técnica detalhada, incluindo o mapeamento de usuários, diagramas, casos de uso e contratos da API, pode ser acessada no [Documento Oficial do Projeto (Google Docs)](https://docs.google.com/document/d/1BIHaE8xcrd_urtJv3H12z04mPflQdOO9nVEA5MpTJvY/edit?tab=t.0#heading=h.btaqsg8we4xd).
 
 ---
 
