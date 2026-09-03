@@ -1,0 +1,55 @@
+name: CI GymFlow
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  qualidade-frontend:
+    name: Validar Frontend (TypeScript e Build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+    steps:
+      - name: Baixar codigo do repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Instalar dependencias
+        run: npm install
+
+      - name: Checagem estatica de tipos
+        run: npx tsc --noEmit
+
+      - name: Testar build de producao
+        run: npm run build
+
+  qualidade-backend:
+    name: Validar Backend (FastAPI e Dependencias)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+    steps:
+      - name: Baixar codigo do repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pytest "pwdlib[argon2,bcrypt]"
+
+      - name: Validar importacao da aplicacao
+        run: python -c "from main import app; print('Backend importado com sucesso!')"
