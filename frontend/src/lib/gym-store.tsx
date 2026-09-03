@@ -6,41 +6,84 @@ export type Sessao =
   | { papel: "aluno"; nome: string; alunoId: string; email: string; plano?: string }
   | null;
 
+export interface ExercicioLocal {
+  id: string | number;
+  alunoId?: string | number;
+  nome: string;
+  treino: string;
+  series: number;
+  repeticoes: number;
+  cargaKg: number;
+  descansoSegundos: number;
+}
+
 interface GymContextType {
   sessao: Sessao;
+  hidratado: boolean;
   alunos: typeof alunosIniciais;
   checkIns: typeof checkInsIniciais;
-  exercicios: typeof exerciciosIniciais;
+  exercicios: ExercicioLocal[];
   entrarComoAdmin: () => void;
   entrarComoAluno: (aluno: { id: number | string; nome: string; email: string; plano?: string }) => void;
   sair: () => void;
+  adicionarExercicio: (exercicio: Omit<ExercicioLocal, "id">) => void;
+  removerExercicio: (id: string | number) => void;
 }
 
 const GymContext = createContext<GymContextType | undefined>(undefined);
 
 export function GymProvider({ children }: { children: React.ReactNode }) {
-  const [sessao, setSessao] = useState<Sessao>(() => {
-    // Verificação segura para evitar quebra no SSR
-    if (typeof window !== "undefined") {
-      const salvo = localStorage.getItem("gymflow_sessao");
-      return salvo ? JSON.parse(salvo) : null;
-    }
-    return null;
-  });
+  // Inicia com null para garantir que o HTML do SSR e o do primeiro render no cliente sejam idênticos
+  const [sessao, setSessao] = useState<Sessao>(null);
+  const [hidratado, setHidratado] = useState(false);
 
   const [alunos] = useState(alunosIniciais);
   const [checkIns] = useState(checkInsIniciais);
-  const [exercicios] = useState(exerciciosIniciais);
-
+  const [exercicios, setExercicios] = useState<ExercicioLocal[]>(() => {
+    return (exerciciosIniciais as any[]).map((ex, idx) => ({
+      id: ex.id ?? String(idx + 1),
+      alunoId: ex.alunoId ?? "1",
+      nome: ex.nome ?? "Exercício",
+      treino: ex.treino ?? "A",
+      series: ex.series ?? 3,
+      repeticoes: ex.repeticoes ?? ex.reps ?? 10,
+      cargaKg: ex.cargaKg ?? ex.carga ?? 0,
+      descansoSegundos: ex.descansoSegundos ?? ex.descanso ?? 60,
+    }));
+  });
+  // Lê do localStorage somente no cliente após montar
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      if (sessao) {
-        localStorage.setItem("gymflow_sessao", JSON.stringify(sessao));
-      } else {
-        localStorage.removeItem("gymflow_sessao");
+    setHidratado(true);
+    try {
+      const salvo = localStorage.getItem("gymflow_sessao");
+      if (salvo) {
+        setSessao(JSON.parse(salvo));
       }
+
+      const exerciciosSalvos = localStorage.getItem("gymflow_exercicios");
+      if (exerciciosSalvos) {
+        setExercicios(JSON.parse(exerciciosSalvos));
+      }
+    } catch {
+      // Ignora erro de parse
     }
-  }, [sessao]);
+  }, []);
+
+  // Salva alterações de sessão no localStorage
+  useEffect(() => {
+    if (!hidratado) return;
+    if (sessao) {
+      localStorage.setItem("gymflow_sessao", JSON.stringify(sessao));
+    } else {
+      localStorage.removeItem("gymflow_sessao");
+    }
+  }, [sessao, hidratado]);
+
+  // Salva alterações de exercícios no localStorage
+  useEffect(() => {
+    if (!hidratado) return;
+    localStorage.setItem("gymflow_exercicios", JSON.stringify(exercicios));
+  }, [exercicios, hidratado]);
 
   const entrarComoAdmin = () => {
     setSessao({
@@ -67,16 +110,31 @@ export function GymProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const adicionarExercicio = (novo: Omit<ExercicioLocal, "id">) => {
+    const item: ExercicioLocal = {
+      ...novo,
+      id: Date.now().toString(),
+    };
+    setExercicios((antigos) => [...antigos, item]);
+  };
+
+  const removerExercicio = (id: string | number) => {
+    setExercicios((antigos) => antigos.filter((e) => String(e.id) !== String(id)));
+  };
+
   return (
     <GymContext.Provider
       value={{
         sessao,
+        hidratado,
         alunos,
         checkIns,
         exercicios,
         entrarComoAdmin,
         entrarComoAluno,
         sair,
+        adicionarExercicio,
+        removerExercicio,
       }}
     >
       {children}

@@ -1,0 +1,323 @@
+warning: in the working copy of 'frontend/src/components/RequerSessao.tsx', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/backend/__pycache__/main.cpython-313.pyc b/backend/__pycache__/main.cpython-313.pyc[m
+[1mindex 6aa2e00..73bc80f 100644[m
+Binary files a/backend/__pycache__/main.cpython-313.pyc and b/backend/__pycache__/main.cpython-313.pyc differ
+[1mdiff --git a/backend/gymflow.db b/backend/gymflow.db[m
+[1mindex 35a5667..05ee8c3 100644[m
+Binary files a/backend/gymflow.db and b/backend/gymflow.db differ
+[1mdiff --git a/backend/main.py b/backend/main.py[m
+[1mindex 33a6328..27af12c 100644[m
+[1m--- a/backend/main.py[m
+[1m+++ b/backend/main.py[m
+[36m@@ -1,24 +1,106 @@[m
+[31m-from typing import Optional[m
+[31m-from datetime import date[m
+[31m-from fastapi import FastAPI, Depends, HTTPException[m
+[32m+[m[32mfrom datetime import date, datetime[m
+[32m+[m[32mfrom enum import Enum[m
+[32m+[m[32mfrom typing import List, Optional[m
+[32m+[m[32mfrom fastapi import FastAPI, HTTPException, Depends[m
+ from fastapi.middleware.cors import CORSMiddleware[m
+[31m-from sqlmodel import Session, select[m
+[31m-from database import criar_banco_e_tabelas, get_session[m
+[31m-from models import Aluno, PlanoEnum, StatusAluno[m
+[31m-from datetime import datetime, date[m
+[32m+[m[32mfrom sqlmodel import Field, SQLModel, Session, create_engine, select, Relationship[m
+[32m+[m[32mfrom pwdlib import PasswordHash[m
+ [m
+[31m-app = FastAPI(title="GymFlow API")[m
+[32m+[m[32m# Configuração de Hash de Senha (bcrypt)[m
+[32m+[m[32mpassword_hash = PasswordHash.recommended()[m
+[32m+[m
+[32m+[m[32m# --- ENUMS ---[m
+[32m+[m[32mclass StatusAluno(str, Enum):[m
+[32m+[m[32m    ATIVO = "Ativo"[m
+[32m+[m[32m    INATIVO = "Inativo"[m
+[32m+[m
+[32m+[m[32mclass PlanoEnum(str, Enum):[m
+[32m+[m[32m    MENSAL = "Mensal"[m
+[32m+[m[32m    TRIMESTRAL = "Trimestral"[m
+[32m+[m[32m    ANUAL = "Anual"[m
+[32m+[m
+[32m+[m[32mclass AlunoUpdate(SQLModel):[m
+[32m+[m[32m    nome: Optional[str] = None[m
+[32m+[m[32m    cpf: Optional[str] = None[m
+[32m+[m[32m    email: Optional[str] = None[m
+[32m+[m[32m    data_nascimento: Optional[date] = None[m
+[32m+[m[32m    plano: Optional[PlanoEnum] = None[m
+[32m+[m[32m    status: Optional[StatusAluno] = None[m
+[32m+[m
+[32m+[m[32m# --- TABELAS / MODELOS ---[m
+[32m+[m[32mclass Aluno(SQLModel, table=True):[m
+[32m+[m[32m    id: Optional[int] = Field(default=None, primary_key=True)[m
+[32m+[m[32m    nome: str[m
+[32m+[m[32m    cpf: str = Field(unique=True, index=True)[m
+[32m+[m[32m    email: str = Field(unique=True, index=True)[m
+[32m+[m[32m    senha_hash: str = Field(default="")[m
+[32m+[m[32m    data_nascimento: Optional[date] = None[m
+[32m+[m[32m    plano: PlanoEnum = PlanoEnum.MENSAL[m
+[32m+[m[32m    status: StatusAluno = StatusAluno.ATIVO[m
+[32m+[m
+[32m+[m[32m    # Relacionamentos[m
+[32m+[m[32m    checkins: List["Checkin"] = Relationship(back_populates="aluno")[m
+[32m+[m[32m    treinos: List["Treino"] = Relationship(back_populates="aluno")[m
+[32m+[m
+[32m+[m[32mclass Checkin(SQLModel, table=True):[m
+[32m+[m[32m    id: Optional[int] = Field(default=None, primary_key=True)[m
+[32m+[m[32m    aluno_id: int = Field(foreign_key="aluno.id")[m
+[32m+[m[32m    data_hora: datetime = Field(default_factory=datetime.utcnow)[m
+[32m+[m[32m    liberado: bool = True[m
+[32m+[m
+[32m+[m[32m    aluno: Optional[Aluno] = Relationship(back_populates="checkins")[m
+[32m+[m
+[32m+[m[32mclass Treino(SQLModel, table=True):[m
+[32m+[m[32m    id: Optional[int] = Field(default=None, primary_key=True)[m
+[32m+[m[32m    aluno_id: int = Field(foreign_key="aluno.id")[m
+[32m+[m[32m    identificador: str = "A"  # Treino A, B ou C[m
+[32m+[m[32m    grupo_muscular: str      # Ex: "Peito / Tríceps"[m
+[32m+[m
+[32m+[m[32m    aluno: Optional[Aluno] = Relationship(back_populates="treinos")[m
+[32m+[m[32m    exercicios: List["Exercicio"] = Relationship(back_populates="treino")[m
+[32m+[m
+[32m+[m[32mclass Exercicio(SQLModel, table=True):[m
+[32m+[m[32m    id: Optional[int] = Field(default=None, primary_key=True)[m
+[32m+[m[32m    treino_id: int = Field(foreign_key="treino.id")[m
+[32m+[m[32m    nome: str                # Ex: "Supino Reto"[m
+[32m+[m[32m    series: int = 4[m
+[32m+[m[32m    repeticoes: int = 10[m
+[32m+[m[32m    carga_kg: float = 20.0[m
+[32m+[m[32m    descanso_segundos: int = 60[m
+[32m+[m
+[32m+[m[32m    treino: Optional[Treino] = Relationship(back_populates="exercicios")[m
+[32m+[m
+[32m+[m[32m# --- SCHEMAS DE ENTRADA (DTOs) ---[m
+[32m+[m[32mclass AlunoCreate(SQLModel):[m
+[32m+[m[32m    nome: str[m
+[32m+[m[32m    cpf: str[m
+[32m+[m[32m    email: str[m
+[32m+[m[32m    senha: str[m
+[32m+[m[32m    data_nascimento: Optional[date] = None[m
+[32m+[m[32m    plano: PlanoEnum = PlanoEnum.MENSAL[m
+[32m+[m[32m    status: StatusAluno = StatusAluno.ATIVO[m
+[32m+[m
+[32m+[m[32mclass LoginRequest(SQLModel):[m
+[32m+[m[32m    email: str[m
+[32m+[m[32m    senha: str[m
+[32m+[m
+[32m+[m[32mclass CheckinRequest(SQLModel):[m
+[32m+[m[32m    termo: str  # CPF ou Matrícula/ID[m
+[32m+[m
+[32m+[m[32m# --- BANCO DE DADOS ---[m
+[32m+[m[32msqlite_url = "sqlite:///./gymflow.db"[m
+[32m+[m[32mengine = create_engine(sqlite_url, connect_args={"check_same_thread": False})[m
+[32m+[m
+[32m+[m[32mdef get_session():[m
+[32m+[m[32m    with Session(engine) as session:[m
+[32m+[m[32m        yield session[m
+[32m+[m
+[32m+[m[32m# --- INICIALIZAÇÃO FASTAPI ---[m
+[32m+[m[32mapp = FastAPI(title="GymFlow API", version="1.0.0")[m
+ [m
+[31m-# --- CONFIGURAÇÃO DE CORS (Liberando localhost:8080 e localhost:5173) ---[m
+ app.add_middleware([m
+     CORSMiddleware,[m
+[31m-    allow_origins=[[m
+[31m-        "http://localhost:8080",[m
+[31m-        "http://127.0.0.1:8080",[m
+[31m-        "http://localhost:5173",[m
+[31m-        "http://127.0.0.1:5173",[m
+[31m-        "*"[m
+[31m-    ],[m
+[32m+[m[32m    allow_origins=["*"],[m
+     allow_credentials=True,[m
+     allow_methods=["*"],[m
+     allow_headers=["*"],[m
+[36m@@ -26,64 +108,165 @@[m [mapp.add_middleware([m
+ [m
+ @app.on_event("startup")[m
+ def on_startup():[m
+[31m-    criar_banco_e_tabelas()[m
+[32m+[m[32m    SQLModel.metadata.create_all(engine)[m
+ [m
+[31m-@app.get("/")[m
+[31m-def home():[m
+[31m-    return {"message": "API do GymFlow e Banco de Dados rodando com sucesso!"}[m
+[32m+[m[32m# ==============================================================================[m
+[32m+[m[32m# ROTAS DA API[m
+[32m+[m[32m# ==============================================================================[m
+ [m
+[31m-@app.get("/api/v1/alunos")[m
+[32m+[m[32m# 1. LISTAR TODOS OS ALUNOS (Resolve o erro 405 Method Not Allowed do painel)[m
+[32m+[m[32m@app.get("/api/v1/alunos", response_model=List[Aluno])[m
+ def listar_alunos(session: Session = Depends(get_session)):[m
+     alunos = session.exec(select(Aluno)).all()[m
+     return alunos[m
+ [m
+[31m-@app.post("/api/v1/alunos", response_model=Aluno)[m
+[31m-def criar_aluno(aluno: Aluno, session: Session = Depends(get_session)):[m
+[31m-    try:[m
+[31m-        # Se data_nascimento veio como string, converte para objeto date do Python[m
+[31m-        if isinstance(aluno.data_nascimento, str) and aluno.data_nascimento:[m
+[31m-            aluno.data_nascimento = datetime.strptime(aluno.data_nascimento, "%Y-%m-%d").date()[m
+[32m+[m[32m# 2. PRÉ-CADASTRO / CRIAÇÃO DE ALUNO (Com Hash de Senha)[m
+[32m+[m[32m@app.post("/api/v1/alunos", response_model=Aluno, status_code=201)[m
+[32m+[m[32mdef cadastrar_aluno(dados: AlunoCreate, session: Session = Depends(get_session)):[m
+[32m+[m[32m    cpf_limpo = dados.cpf.replace(".", "").replace("-", "").strip()[m
+[32m+[m[32m    if session.exec(select(Aluno).where(Aluno.cpf == cpf_limpo)).first():[m
+[32m+[m[32m        raise HTTPException(status_code=400, detail="CPF já cadastrado.")[m
+[32m+[m[32m    if session.exec(select(Aluno).where(Aluno.email == dados.email.lower().strip())).first():[m
+[32m+[m[32m        raise HTTPException(status_code=400, detail="E-mail já cadastrado.")[m
+[32m+[m[41m    [m
+[32m+[m[32m    if len(dados.senha) < 6:[m
+[32m+[m[32m        raise HTTPException(status_code=400, detail="A senha deve ter no mínimo 6 caracteres.")[m
+ [m
+[31m-        session.add(aluno)[m
+[31m-        session.commit()[m
+[31m-        session.refresh(aluno)[m
+[31m-        return aluno[m
+[31m-    except Exception as e:[m
+[31m-        session.rollback()[m
+[31m-        raise HTTPException(status_code=400, detail=f"Erro ao salvar aluno: {str(e)}")[m
+[32m+[m[32m    novo_aluno = Aluno([m
+[32m+[m[32m        nome=dados.nome,[m
+[32m+[m[32m        cpf=cpf_limpo,[m
+[32m+[m[32m        email=dados.email.lower().strip(),[m
+[32m+[m[32m        senha_hash=password_hash.hash(dados.senha),[m
+[32m+[m[32m        data_nascimento=dados.data_nascimento,[m
+[32m+[m[32m        plano=dados.plano,[m
+[32m+[m[32m        status=dados.status[m
+[32m+[m[32m    )[m
+[32m+[m[32m    session.add(novo_aluno)[m
+[32m+[m[32m    session.commit()[m
+[32m+[m[32m    session.refresh(novo_aluno)[m
+[32m+[m[32m    return novo_aluno[m
+ [m
+[32m+[m[32m# 3. EXCLUIR / REMOVER ALUNO[m
+[32m+[m[32m@app.delete("/api/v1/alunos/{aluno_id}", status_code=200)[m
+[32m+[m[32mdef deletar_aluno(aluno_id: int, session: Session = Depends(get_session)):[m
+[32m+[m[32m    aluno = session.get(Aluno, aluno_id)[m
+[32m+[m[32m    if not aluno:[m
+[32m+[m[32m        raise HTTPException(status_code=404, detail="Aluno não encontrado.")[m
+[32m+[m[32m    session.delete(aluno)[m
+[32m+[m[32m    session.commit()[m
+[32m+[m[32m    return {"mensagem": "Aluno removido com sucesso."}[m
+ [m
+ @app.put("/api/v1/alunos/{aluno_id}", response_model=Aluno)[m
+[31m-def atualizar_aluno(aluno_id: int, dados: Aluno, session: Session = Depends(get_session)):[m
+[31m-    aluno_banco = session.get(Aluno, aluno_id)[m
+[31m-    if not aluno_banco:[m
+[31m-        raise HTTPException(status_code=404, detail="Aluno não encontrado")[m
+[31m-    [m
+[31m-    # Atualiza os dados[m
+[31m-    aluno_banco.nome = dados.nome[m
+[31m-    aluno_banco.cpf = dados.cpf[m
+[31m-    aluno_banco.email = dados.email[m
+[31m-    aluno_banco.plano = dados.plano[m
+[31m-    aluno_banco.status = dados.status[m
+[31m-    [m
+[31m-    if isinstance(dados.data_nascimento, str) and dados.data_nascimento:[m
+[31m-        aluno_banco.data_nascimento = datetime.strptime(dados.data_nascimento, "%Y-%m-%d").date()[m
+[31m-    elif dados.data_nascimento:[m
+[31m-        aluno_banco.data_nascimento = dados.data_nascimento[m
+[32m+[m[32mdef atualizar_aluno(aluno_id: int, dados: AlunoUpdate, session: Session = Depends(get_session)):[m
+[32m+[m[32m    aluno_db = session.get(Aluno, aluno_id)[m
+[32m+[m[32m    if not aluno_db:[m
+[32m+[m[32m        raise HTTPException(status_code=404, detail="Aluno não encontrado.")[m
+ [m
+[31m-    session.add(aluno_banco)[m
+[31m-    session.commit()[m
+[31m-    session.refresh(aluno_banco)[m
+[31m-    return aluno_banco[m
+[32m+[m[32m    dados_dict = dados.model_dump(exclude_unset=True)[m
+ [m
+[31m-# Adicione no final do backend/main.py[m
+[32m+[m[32m    # 1. Tratamento e validação de duplicidade de CPF[m
+[32m+[m[32m    if "cpf" in dados_dict and dados_dict["cpf"]:[m
+[32m+[m[32m        cpf_limpo = dados_dict["cpf"].replace(".", "").replace("-", "").strip()[m
+[32m+[m[32m        duplicado = session.exec([m
+[32m+[m[32m            select(Aluno).where(Aluno.cpf == cpf_limpo, Aluno.id != aluno_id)[m
+[32m+[m[32m        ).first()[m
+[32m+[m[32m        if duplicado:[m
+[32m+[m[32m            raise HTTPException(status_code=400, detail="Este CPF já pertence a outro aluno.")[m
+[32m+[m[32m        dados_dict["cpf"] = cpf_limpo[m
+ [m
+[31m-@app.delete("/api/v1/alunos/{aluno_id}")[m
+[31m-def deletar_aluno(aluno_id: int, session: Session = Depends(get_session)):[m
+[31m-    aluno = session.get(Aluno, aluno_id)[m
+[32m+[m[32m    # 2. Tratamento e validação de duplicidade de E-mail[m
+[32m+[m[32m    if "email" in dados_dict and dados_dict["email"]:[m
+[32m+[m[32m        email_limpo = dados_dict["email"].lower().strip()[m
+[32m+[m[32m        duplicado_email = session.exec([m
+[32m+[m[32m            select(Aluno).where(Aluno.email == email_limpo, Aluno.id != aluno_id)[m
+[32m+[m[32m        ).first()[m
+[32m+[m[32m        if duplicado_email:[m
+[32m+[m[32m            raise HTTPException(status_code=400, detail="Este e-mail já pertence a outro aluno.")[m
+[32m+[m[32m        dados_dict["email"] = email_limpo[m
+[32m+[m
+[32m+[m[32m    # 3. Conversão segura de data caso chegue como string[m
+[32m+[m[32m    if "data_nascimento" in dados_dict and isinstance(dados_dict["data_nascimento"], str):[m
+[32m+[m[32m        dados_dict["data_nascimento"] = datetime.strptime(dados_dict["data_nascimento"], "%Y-%m-%d").date()[m
+[32m+[m
+[32m+[m[32m    # 4. Aplica as alterações no modelo[m
+[32m+[m[32m    for chave, valor in dados_dict.items():[m
+[32m+[m[32m        setattr(aluno_db, chave, valor)[m
+[32m+[m
+[32m+[m[32m    session.add(aluno_db)[m
+[32m+[m[32m    session.commit()[m
+[32m+[m[32m    session.refresh(aluno_db)[m
+[32m+[m[32m    return aluno_db[m
+[32m+[m
+[32m+[m[32m# 4. AUTENTICAÇÃO / LOGIN[m
+[32m+[m[32m@app.post("/api/v1/autenticacao")[m
+[32m+[m[32mdef login(dados: LoginRequest, session: Session = Depends(get_session)):[m
+[32m+[m[32m    email_limpo = dados.email.lower().strip()[m
+[32m+[m[41m    [m
+[32m+[m[32m    # Login administrativo[m
+[32m+[m[32m    if "admin" in email_limpo and dados.senha == "admin123":[m
+[32m+[m[32m        return {[m
+[32m+[m[32m            "papel": "admin",[m
+[32m+[m[32m            "nome": "Administrador GymFlow",[m
+[32m+[m[32m            "email": "admin@gymflow.com"[m
+[32m+[m[32m        }[m
+[32m+[m[41m        [m
+[32m+[m[32m    aluno = session.exec(select(Aluno).where(Aluno.email == email_limpo)).first()[m
+     if not aluno:[m
+[31m-        raise HTTPException(status_code=404, detail="Aluno não encontrado")[m
+[32m+[m[32m        raise HTTPException(status_code=401, detail="Credenciais inválidas.")[m
+[32m+[m[41m        [m
+[32m+[m[32m    if not password_hash.verify(dados.senha, aluno.senha_hash):[m
+[32m+[m[32m        raise HTTPException(status_code=401, detail="Senha incorreta.")[m
+[32m+[m[41m        [m
+[32m+[m[32m    return {[m
+[32m+[m[32m        "papel": "aluno",[m
+[32m+[m[32m        "id": aluno.id,[m
+[32m+[m[32m        "nome": aluno.nome,[m
+[32m+[m[32m        "email": aluno.email,[m
+[32m+[m[32m        "plano": aluno.plano,[m
+[32m+[m[32m        "status": aluno.status[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m# 5. REGISTRO DE CHECK-IN[m
+[32m+[m[32m@app.post("/api/v1/checkin")[m
+[32m+[m[32mdef registrar_checkin(dados: CheckinRequest, session: Session = Depends(get_session)):[m
+[32m+[m[32m    termo = dados.termo.replace(".", "").replace("-", "").strip()[m
+     [m
+[31m-    session.delete(aluno)[m
+[32m+[m[32m    aluno = session.exec([m
+[32m+[m[32m        select(Aluno).where((Aluno.cpf == termo) | (Aluno.id == (int(termo) if termo.isdigit() else -1)))[m
+[32m+[m[32m    ).first()[m
+[32m+[m[41m    [m
+[32m+[m[32m    if not aluno:[m
+[32m+[m[32m        raise HTTPException(status_code=404, detail="Aluno não encontrado.")[m
+[32m+[m[41m        [m
+[32m+[m[32m    if aluno.status != StatusAluno.ATIVO:[m
+[32m+[m[32m        negado = Checkin(aluno_id=aluno.id, liberado=False)[m
+[32m+[m[32m        session.add(negado)[m
+[32m+[m[32m        session.commit()[m
+[32m+[m[32m        raise HTTPException(status_code=403, detail="Acesso bloqueado: Matrícula com status Inativo.")[m
+[32m+[m[41m        [m
+[32m+[m[32m    checkin_liberado = Checkin(aluno_id=aluno.id, liberado=True)[m
+[32m+[m[32m    session.add(checkin_liberado)[m
+     session.commit()[m
+[31m-    return {"message": f"Aluno ID #{aluno_id} removido com sucesso"}[m
+\ No n

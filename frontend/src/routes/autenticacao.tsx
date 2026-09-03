@@ -19,48 +19,37 @@ function Login() {
   const [carregando, setCarregando] = useState(false);
 
   async function submeter(e: React.FormEvent) {
-    e.preventDefault();
-    setErro("");
+  e.preventDefault();
+  setErro("");
 
-    const emailLimpo = email.trim().toLowerCase();
-    if (!emailLimpo || !senha.trim()) {
-      setErro("Informe e-mail e senha para continuar.");
-      return;
+  try {
+    setCarregando(true);
+    const res = await fetch("http://127.0.0.1:8000/api/v1/autenticacao", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, senha }),
+    });
+
+    if (!res.ok) {
+      const detalhe = await res.json();
+      throw new Error(detalhe.detail || "Falha na autenticação.");
     }
 
-    // 1. Acesso Administrador
-    if (emailLimpo.includes("admin")) {
+    const usuario = await res.json();
+
+    if (usuario.papel === "admin") {
       entrarComoAdmin();
       navigate({ to: "/admin/alunos" });
-      return;
-    }
-
-    // 2. Acesso Aluno (Consulta API SQLite)
-    try {
-      setCarregando(true);
-      const res = await fetch("http://127.0.0.1:8000/api/v1/alunos");
-      if (!res.ok) {
-        throw new Error("Erro ao consultar servidor.");
-      }
-
-      const alunos = await res.json();
-      const alunoEncontrado = alunos.find(
-        (a: any) => a.email.toLowerCase().trim() === emailLimpo
-      );
-
-      if (!alunoEncontrado) {
-        setErro("E-mail não cadastrado no sistema.");
-        return;
-      }
-
-      entrarComoAluno(alunoEncontrado);
+    } else {
+      entrarComoAluno(usuario);
       navigate({ to: "/aluno" });
-    } catch (err) {
-      setErro("Não foi possível conectar ao servidor backend.");
-    } finally {
-      setCarregando(false);
     }
+  } catch (err: any) {
+    setErro(err.message || "Não foi possível conectar ao servidor.");
+  } finally {
+    setCarregando(false);
   }
+}
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-10">

@@ -22,6 +22,8 @@ function PaginaCadastro() {
   const [nome, setNome] = useState("");
   const [cpf, setCpf] = useState("");
   const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+  const [confirmarSenha, setConfirmarSenha] = useState("");
   const [dataNascimento, setDataNascimento] = useState("");
   const [plano, setPlano] = useState("Mensal");
 
@@ -41,8 +43,18 @@ function PaginaCadastro() {
     e.preventDefault();
     setErro("");
 
-    if (!nome.trim() || !cpf.trim() || !email.trim() || !dataNascimento) {
+    if (!nome.trim() || !cpf.trim() || !email.trim() || !senha || !dataNascimento) {
       setErro("Por favor, preencha todos os campos obrigatórios.");
+      return;
+    }
+
+    if (senha.length < 6) {
+      setErro("A senha deve ter no mínimo 6 caracteres.");
+      return;
+    }
+
+    if (senha !== confirmarSenha) {
+      setErro("As senhas não coincidem.");
       return;
     }
 
@@ -53,9 +65,10 @@ function PaginaCadastro() {
         nome: nome.trim(),
         cpf: cpf.trim(),
         email: email.trim().toLowerCase(),
+        senha: senha,
         data_nascimento: dataNascimento,
         plano: plano,
-        status: "Inativo",
+        status: "Ativo",
       };
 
       const res = await fetch("http://127.0.0.1:8000/api/v1/alunos", {
@@ -66,7 +79,7 @@ function PaginaCadastro() {
 
       if (!res.ok) {
         const erroApi = await res.json();
-        throw new Error(erroApi.detail || "Erro ao realizar o pré-cadastro.");
+        throw new Error(erroApi.detail || "Erro ao realizar o cadastro.");
       }
 
       setSucesso(true);
@@ -85,9 +98,9 @@ function PaginaCadastro() {
             <CheckCircle2 className="h-10 w-10" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-foreground">Pré-cadastro Concluído!</h2>
+            <h2 className="text-2xl font-bold text-foreground">Cadastro Concluído!</h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              Seus dados foram registrados com sucesso. Dirija-se à recepção para efetivar sua matrícula.
+              Sua conta foi criada com sucesso. Agora você já pode acessar com seu e-mail e senha.
             </p>
           </div>
           <Button onClick={() => navigate({ to: "/autenticacao" })} className="w-full">
@@ -111,7 +124,7 @@ function PaginaCadastro() {
         </div>
 
         <p className="mt-2 text-center text-sm text-muted-foreground">
-          Faça seu pré-cadastro como aluno
+          Crie sua conta de aluno
         </p>
 
         <form
@@ -153,6 +166,31 @@ function PaginaCadastro() {
             />
           </div>
 
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="senha">Senha</Label>
+              <Input
+                id="senha"
+                type="password"
+                placeholder="Mínimo 6 dígitos"
+                value={senha}
+                onChange={(e) => setSenha(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmarSenha">Confirmar Senha</Label>
+              <Input
+                id="confirmarSenha"
+                type="password"
+                placeholder="Repita a senha"
+                value={confirmarSenha}
+                onChange={(e) => setConfirmarSenha(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="nascimento">Data de Nascimento</Label>
             <Input
@@ -173,7 +211,6 @@ function PaginaCadastro() {
               <SelectContent>
                 <SelectItem value="Mensal">Mensal</SelectItem>
                 <SelectItem value="Trimestral">Trimestral</SelectItem>
-                <SelectItem value="Semestral">Semestral</SelectItem>
                 <SelectItem value="Anual">Anual</SelectItem>
               </SelectContent>
             </Select>
@@ -187,12 +224,12 @@ function PaginaCadastro() {
 
           <Button type="submit" className="w-full" disabled={carregando}>
             <UserPlus className="mr-2 h-4 w-4" />
-            {carregando ? "Cadastrando..." : "Concluir Pré-cadastro"}
+            {carregando ? "Cadastrando..." : "Concluir Cadastro"}
           </Button>
 
           <div className="pt-3 text-center">
             <Link to="/autenticacao" className="text-xs text-muted-foreground hover:text-primary transition-colors">
-              Já tem cadastro? Entrar no sistema
+              Já tem conta? Fazer login
             </Link>
           </div>
         </form>
