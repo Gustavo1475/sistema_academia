@@ -1,74 +1,96 @@
-import type { ReactNode } from "react";
-import { Dumbbell, Layers, Repeat, Timer, Weight } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useGym } from "@/lib/gym-store";
-import { TREINOS } from "@/lib/gym-data";
+import React, { useState } from "react";
+import { Repeat, Weight, Timer, Dumbbell } from "lucide-react";
+import { useGym, ExercicioLocal } from "@/lib/gym-store";
+
+export interface FichaTreinoProps {
+  alunoId?: string | number;
+  exercicios?: ExercicioLocal[];
+  treinoAtivo?: string;
+  acao?: (id: string) => React.ReactNode;
+}
 
 export function FichaTreino({
   alunoId,
+  exercicios: exerciciosProps,
+  treinoAtivo: treinoProps,
   acao,
-}: {
-  alunoId: string;
-  acao?: (exercicioId: string) => ReactNode;
-}) {
-  const { exercicios } = useGym();
-  const daFicha = exercicios.filter((e) => e.alunoId === alunoId);
+}: FichaTreinoProps) {
+  const { exercicios: exerciciosStore } = useGym();
+  const [abaInterna, setAbaInterna] = useState("A");
+
+  // Se treinoAtivo não for passado por prop, usa o estado interno de abas (A, B, C)
+  const treinoSelecionado = treinoProps ?? abaInterna;
+
+  // Usa os exercícios passados via prop ou pega direto do store filtrando pelo alunoId
+  const listaBase = exerciciosProps ?? exerciciosStore;
+  const filtrados = listaBase.filter((e) => {
+    const bateTreino = e.treino === treinoSelecionado;
+    if (alunoId !== undefined && e.alunoId !== undefined) {
+      return bateTreino && String(e.alunoId) === String(alunoId);
+    }
+    return bateTreino;
+  });
 
   return (
-    <div className="min-w-0 rounded-2xl border border-border bg-card p-5 shadow-sm">
-      <Tabs defaultValue="A">
-        <TabsList className="w-full">
-          {TREINOS.map((t) => (
-            <TabsTrigger key={t.letra} value={t.letra} className="flex-1">
-              Treino {t.letra}
-            </TabsTrigger>
+    <div className="space-y-4">
+      {/* Se não recebeu treinoAtivo fixo por prop, exibe as abas A, B e C */}
+      {!treinoProps && (
+        <div className="flex gap-2 rounded-lg bg-card/60 p-1 border border-border/40">
+          {["A", "B", "C"].map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setAbaInterna(t)}
+              className={`flex-1 rounded-md py-1.5 text-sm font-medium transition ${
+                treinoSelecionado === t
+                  ? "bg-primary text-primary-foreground shadow"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Treino {t}
+            </button>
           ))}
-        </TabsList>
+        </div>
+      )}
 
-        {TREINOS.map((t) => {
-          const lista = daFicha.filter((e) => e.treino === t.letra);
-          return (
-            <TabsContent key={t.letra} value={t.letra} className="mt-5">
-              <h3 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">
-                {t.titulo}
-              </h3>
-              {lista.length === 0 ? (
-                <p className="mt-6 rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-                  Nenhum exercício cadastrado neste treino.
-                </p>
-              ) : (
-                <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  {lista.map((e) => (
-                    <div
-                      key={e.id}
-                      className="rounded-xl border border-border bg-secondary/40 p-4 transition-colors hover:border-primary/40"
-                    >
-                      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
-                        <div className="flex min-w-0 items-center gap-2">
-                          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/15 text-primary">
-                            <Dumbbell className="h-4 w-4" />
-                          </span>
-                          <div className="min-w-0">
-                            <p className="truncate font-semibold">{e.nome}</p>
-                            <p className="text-xs text-muted-foreground">{e.grupo}</p>
-                          </div>
-                        </div>
-                        {acao ? acao(e.id) : null}
-                      </div>
-                      <dl className="mt-4 grid grid-cols-2 gap-2 text-xs">
-                        <Info icone={Layers} label="Séries" valor={String(e.series)} />
-                        <Info icone={Repeat} label="Reps" valor={e.repeticoes} />
-                        <Info icone={Weight} label="Carga" valor={`${e.carga} kg`} />
-                        <Info icone={Timer} label="Descanso" valor={e.descanso} />
-                      </dl>
-                    </div>
-                  ))}
+      {filtrados.length === 0 ? (
+        <div className="rounded-xl border border-border/50 bg-card/40 p-8 text-center text-muted-foreground">
+          Nenhum exercício cadastrado para o Treino {treinoSelecionado}.
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2">
+          {filtrados.map((e) => (
+            <div
+              key={String(e.id)}
+              className="flex flex-col justify-between rounded-xl border border-border/60 bg-card p-4 transition hover:border-border"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <Dumbbell className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-foreground">{e.nome}</h4>
+                    <p className="text-xs text-muted-foreground">{e.grupo || "Geral"}</p>
+                  </div>
                 </div>
-              )}
-            </TabsContent>
-          );
-        })}
-      </Tabs>
+                {acao ? acao(String(e.id)) : null}
+              </div>
+
+              <div className="mt-4 grid grid-cols-4 gap-2 rounded-lg bg-background/50 p-2 text-center text-xs">
+                <Info icone={Repeat} label="Séries" valor={String(e.series)} />
+                <Info icone={Repeat} label="Reps" valor={String(e.repeticoes)} />
+                <Info icone={Weight} label="Carga" valor={`${e.cargaKg ?? 0} kg`} />
+                <Info
+                  icone={Timer}
+                  label="Descanso"
+                  valor={e.descanso ? String(e.descanso) : `${e.descansoSegundos ?? 60}s`}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -78,17 +100,17 @@ function Info({
   label,
   valor,
 }: {
-  icone: typeof Layers;
+  icone: React.ComponentType<{ className?: string }>;
   label: string;
   valor: string;
 }) {
   return (
-    <div className="flex items-center gap-2 rounded-lg bg-background/60 px-2.5 py-2">
-      <Icone className="h-3.5 w-3.5 shrink-0 text-primary" />
-      <div className="min-w-0">
-        <dt className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</dt>
-        <dd className="truncate font-semibold">{valor}</dd>
+    <div className="flex flex-col items-center">
+      <div className="flex items-center gap-1 text-muted-foreground">
+        <Icone className="h-3.5 w-3.5" />
+        <span>{label}</span>
       </div>
+      <span className="font-medium text-foreground">{valor}</span>
     </div>
   );
 }

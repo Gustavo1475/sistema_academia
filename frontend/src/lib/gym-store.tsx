@@ -10,11 +10,13 @@ export interface ExercicioLocal {
   id: string | number;
   alunoId?: string | number;
   nome: string;
+  grupo?: string;
   treino: string;
   series: number;
   repeticoes: number;
   cargaKg: number;
-  descansoSegundos: number;
+  descansoSegundos?: number;
+  descanso?: string | number;
 }
 
 interface GymContextType {

@@ -40,8 +40,8 @@ const formVazio = {
   grupo: "Peito",
   series: "3",
   repeticoes: "12",
-  carga: "20",
-  descanso: "60s",
+  cargaKg: "20",
+  descansoSegundos: "60",
   treino: "A" as TreinoLetra,
 };
 
@@ -62,8 +62,8 @@ function PaginaTreinos() {
         if (resposta.ok) {
           const dados: AlunoAPI[] = await resposta.json();
           setAlunos(dados);
-          if (dados.length > 0) {
-            setAlunoId(String(dados[0].id)); // Seleciona o primeiro aluno do banco por padrão
+          if (dados && dados.length > 0 && dados[0]?.id !== undefined) {
+            setAlunoId(String(dados[0].id));
           }
         }
       } catch (err) {
@@ -80,15 +80,14 @@ function PaginaTreinos() {
     setErro("");
 
     adicionarExercicio({
-      id: `e${Date.now()}`,
-      alunoId,
+      alunoId: alunoId,
+      nome: form.nome,
       treino: form.treino,
-      nome: form.nome.trim(),
-      grupo: form.grupo,
-      series: Number(form.series) || 1,
-      repeticoes: form.repeticoes || "10",
-      carga: Number(form.carga) || 0,
-      descanso: form.descanso || "60s",
+      grupo: form.grupo || "Geral",
+      series: Number(form.series) || 3,
+      repeticoes: Number(form.repeticoes) || 10,
+      cargaKg: Number(form.cargaKg) || 0,
+      descansoSegundos: Number(form.descansoSegundos) || 60,
     });
 
     setForm({ ...formVazio, treino: form.treino, grupo: form.grupo });
@@ -190,8 +189,8 @@ function PaginaTreinos() {
                     id="ex-carga"
                     type="number"
                     min={0}
-                    value={form.carga}
-                    onChange={(e) => setForm({ ...form, carga: e.target.value })}
+                    value={form.cargaKg}
+                    onChange={(e) => setForm({ ...form, cargaKg: e.target.value })}
                   />
                 </div>
                 <div className="space-y-2">
@@ -200,8 +199,10 @@ function PaginaTreinos() {
                   </Label>
                   <Input
                     id="ex-descanso"
-                    value={form.descanso}
-                    onChange={(e) => setForm({ ...form, descanso: e.target.value })}
+                    type="number"
+                    min={0}
+                    value={form.descansoSegundos}
+                    onChange={(e) => setForm({ ...form, descansoSegundos: e.target.value })}
                   />
                 </div>
               </div>
